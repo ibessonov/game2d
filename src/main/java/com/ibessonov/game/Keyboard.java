@@ -13,10 +13,12 @@ import java.util.Set;
 public class Keyboard extends KeyAdapter {
 
     private final Set<Integer> pressedKeys = new HashSet<>();
+    private final Set<Integer> tappedKeys = new HashSet<>();
 
     @Override
     public void keyPressed(KeyEvent e) {
-        pressedKeys.add(e.getKeyCode());
+        if (pressedKeys.add(e.getKeyCode()))
+            tappedKeys.add(e.getKeyCode());
     }
 
     @Override
@@ -32,7 +34,19 @@ public class Keyboard extends KeyAdapter {
         return pressedKeys.contains(KeyEvent.VK_RIGHT);
     }
 
-    public boolean isSpacePressed() {
+    public boolean isJumpPressed() {
         return pressedKeys.contains(KeyEvent.VK_SPACE);
+    }
+
+    public boolean isJumpTapped() {
+        return tappedKeys.remove(KeyEvent.VK_SPACE);
+    }
+
+    public boolean isFireTapped() {
+        return tappedKeys.remove(KeyEvent.VK_CONTROL);
+    }
+
+    public boolean isFlipGravityTapped() {
+        return tappedKeys.remove(KeyEvent.VK_ENTER);
     }
 }

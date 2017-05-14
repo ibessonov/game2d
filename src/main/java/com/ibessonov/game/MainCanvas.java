@@ -2,15 +2,19 @@ package com.ibessonov.game;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.ibessonov.game.player.Player;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.ibessonov.game.Constants.TILE;
+import static com.ibessonov.game.Constants.*;
+import static com.ibessonov.game.Conversion.toScreen;
+import static com.ibessonov.game.Conversion.toTile;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -20,22 +24,26 @@ class MainCanvas extends Canvas {
     static GraphicsDevice device = GraphicsEnvironment
             .getLocalGraphicsEnvironment().getScreenDevices()[0];
 
-    @Inject
-    private Keyboard keyboard;
+    @Inject private FrameHolder frame;
+    @Inject private Keyboard keyboard;
+    @Inject private Level level;
+    @Inject private Player player;
 
-    @Inject
-    private Player player;
+    private Collection<BasicEnemy> enemies = new ArrayList<>();
+    private Set<Item> items = new HashSet<>();
+    private Set<Bullet> bullets = new HashSet<>();
 
-    private int scale;
+    private int xOffset = 0;
+    private int yOffset = 0;
 
     @Inject
     void initComponents() {
         JFrame jFrame = new JFrame("Gui");
 
         jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        jFrame.setResizable(false);
-        setPreferredSize(new Dimension(1280, 720));
-//        setMaximumSize(new Dimension(640, 480));
+//        jFrame.setResizable(false);
+        setMinimumSize(new Dimension(1920 * 2 / 3, 1080 * 2 / 3));
+        setPreferredSize(getMinimumSize());
 
         jFrame.setLayout(new BorderLayout());
         jFrame.add(this, BorderLayout.CENTER);
@@ -46,44 +54,59 @@ class MainCanvas extends Canvas {
 
         jFrame.pack();
 
-        for (int i = 0; i < height; i++) {
-            map[i][0] = 1;
-            map[i][width - 1] = 1;
+
+        player.setPosition(TILE, (level.height() - 2) * TILE);
+
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        for (int i = 0; i < 10; i++) {
+            BasicEnemy enemy = new BasicEnemy();
+            enemy.setPosition(toScreen(rnd.nextInt(level.width())),
+                              toScreen(rnd.nextInt(level.height())));
+            enemies.add(enemy);
         }
-        for (int j = 0; j < width; j++) {
-            map[0][j] = 1;
-            map[height - 1][j] = 1;
+        for (int i = 0; i < 50; i++) {
+            items.add(new Item(rnd.nextInt(level.height()), rnd.nextInt(level.width())));
         }
-        for (int i = 0; i < map.length; i++) {
-            for (int j = 0; j < map[i].length; j++) {
-                if (ThreadLocalRandom.current().nextInt(4) == 0) {
-                    map[i][j] = 1;
-                }
-            }
-        }
-        player.x = TILE;
-        player.y = (height - 2) * TILE;
 
         addKeyListener(keyboard);
 //        jFrame.setFocusTraversalKeysEnabled(true);
         setFocusable(true);
 
-        scale = min(getWidth() / Constants.SCREEN_WIDTH, getHeight() / Constants.SCREEN_HEIGHT);
-
         createBufferStrategy(3);
         jFrame.setVisible(true);
-        Timer.run(this::frame, 60);
+        Timer.run(this::tick, 60);
     }
 
     private void update() {
-        player.handleJump(map);
-        player.updateJumpSpeed(map);
+        if (keyboard.isFlipGravityTapped()) {
+            level.gravity().flip();
+        }
+        player.update(level);
+        for (BasicEnemy enemy : enemies) {
+            enemy.update(level);
+        }
+        items.removeIf(item -> item.intersects(player));
+        bullets.removeIf(bullet -> bullet.update(level));
 
-        player.updateRunSpeed(map);
+        for (Iterator<Bullet> bulletIterator = bullets.iterator(); bulletIterator.hasNext(); ) {
+            Bullet bullet = bulletIterator.next();
+            for (BasicEnemy enemy : enemies) {
+                if (bullet.intersects(enemy)) {
+                    enemy.decreaseLifeLevel(bullet.damage());
+                    bulletIterator.remove();
+                    break;
+                }
+            }
+        }
+        enemies.removeIf(HasLifeLevel::isDead);
 
-        int playerLocalX = player.x - xOffset;
-        int leftBorder = Constants.SCREEN_WIDTH / 2 - 2 * TILE;
-        int rightBorder = Constants.SCREEN_WIDTH / 2 + TILE;
+        if (keyboard.isFireTapped()) {
+            bullets.add(player.fireBullet());
+        }
+
+        int playerLocalX = player.x() - xOffset;
+        int leftBorder = SCREEN_WIDTH / 2 - 2 * TILE;
+        int rightBorder = SCREEN_WIDTH / 2 + TILE;
         int offset = 0;
         if (playerLocalX < leftBorder) {
             offset = playerLocalX - leftBorder;
@@ -94,11 +117,11 @@ class MainCanvas extends Canvas {
 
         xOffset += offset;
         xOffset = max(0, xOffset);
-        xOffset = min(width * TILE - Constants.SCREEN_WIDTH, xOffset);
+        xOffset = min(level.width() * TILE - SCREEN_WIDTH, xOffset);
 
-        int playerLocalY = player.y - yOffset;
-        int upperBorder = Constants.SCREEN_HEIGHT / 2 - 2 * TILE;
-        int lowerBorder = Constants.SCREEN_HEIGHT / 2 + 1 * TILE;
+        int playerLocalY = player.y() - yOffset;
+        int upperBorder = SCREEN_HEIGHT / 2 - 7 * TILE / 2;
+        int lowerBorder = SCREEN_HEIGHT / 2 + 4 * TILE / 2;
         offset = 0;
         if (playerLocalY < upperBorder) {
             offset = playerLocalY - upperBorder;
@@ -109,33 +132,38 @@ class MainCanvas extends Canvas {
 
         yOffset += offset;
         yOffset = max(0, yOffset);
-        yOffset = min(height * TILE - Constants.SCREEN_HEIGHT, yOffset);
+        yOffset = min(level.height() * TILE - SCREEN_HEIGHT, yOffset);
     }
 
-    private final int height = 30;
-    private final int width = 80;
-    private final int[][] map = new int[height][width];
-
-//    public static final int SCALE = 32;
-    private int xOffset = 0;
-    private int yOffset = 0;
-
-    private final Color[] tilesPalette = { Color.CYAN, Color.BLUE, Color.GREEN, Color.MAGENTA, Color.LIGHT_GRAY };
-    private static int frame = 0;
-
     private void render() {
-        BufferedImage image = new BufferedImage(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
         Graphics g = image.getGraphics();
 
         g.setColor(Color.WHITE);
-        g.fillRect(0, 0, Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT);
+        g.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-        for (int j = xOffset / TILE, x = j * TILE - xOffset; x < Constants.SCREEN_WIDTH; j++, x += TILE) {
-            for (int i = yOffset / TILE, y = i * TILE - yOffset; y < Constants.SCREEN_HEIGHT; i++, y += TILE) {
-                drawTile(map[i][j], g, x, y);
+        for (int j = toTile(xOffset), x = j * TILE - xOffset; x < SCREEN_WIDTH; j++, x += TILE) {
+            for (int i = toTile(yOffset), y = i * TILE - yOffset; y < SCREEN_HEIGHT; i++, y += TILE) {
+                level.drawTile(g, i, j, x, y);
             }
         }
-        drawPlayer(g);
+        for (Bullet bullet : bullets) {
+            bullet.draw(g, xOffset, yOffset);
+        }
+        player.draw(g, xOffset, yOffset);
+        for (Item item : items) {
+            item.draw(g, xOffset, yOffset);
+        }
+        for (BasicEnemy enemy : enemies) {
+            enemy.draw(g, xOffset, yOffset);
+        }
+        for (int i = 0; i < player.initialLifeLevel(); i++) {
+            g.setColor(i < player.currentLifeLevel() ? Color.WHITE : Color.DARK_GRAY);
+            g.fillRect(6 + i * 5, 6, 4, 10);
+
+            g.setColor(Color.RED);
+            g.drawRect(6 + i * 5, 6, 3, 9);
+        }
 
         g.dispose();
 
@@ -144,8 +172,12 @@ class MainCanvas extends Canvas {
 
         BufferStrategy bs = getBufferStrategy();
         Graphics bsg = bs.getDrawGraphics();
-        bsg.drawImage(image, (getWidth() - Constants.SCREEN_WIDTH * scale) / 2, (getHeight() - Constants.SCREEN_HEIGHT * scale) / 2,
-                Constants.SCREEN_WIDTH * scale, Constants.SCREEN_HEIGHT * scale, null);
+        bsg.setColor(Color.BLACK);
+        bsg.fillRect(0, 0, getWidth(), getHeight());
+
+        int scale = min(getWidth() / SCREEN_WIDTH, getHeight() / SCREEN_HEIGHT);
+        bsg.drawImage(image, (getWidth() - SCREEN_WIDTH * scale) / 2, (getHeight() - SCREEN_HEIGHT * scale) / 2,
+                SCREEN_WIDTH * scale, SCREEN_HEIGHT * scale, null);
         bsg.dispose();
         bs.show();
     }
@@ -161,20 +193,11 @@ class MainCanvas extends Canvas {
 //        }
     }
 
-    private void drawPlayer(Graphics g) {
-        g.setColor(Color.RED);
-        g.fillRect(player.x - xOffset, player.y - yOffset, player.width, player.height);
-    }
 
-    private void drawTile(int i, Graphics g, int x, int y) {
-        g.setColor(tilesPalette[i]);
-        g.fillRect(x, y, TILE, TILE);
-    }
-
-
-    public void frame() {
-        this.render();
-        this.update();
+    public void tick() {
+        frame.tick();
+        update();
+        render();
     }
 
     @Override
