@@ -1,15 +1,11 @@
 package com.ibessonov.game;
 
-import com.ibessonov.game.player.BridgedPlayer;
-import com.ibessonov.game.player.Player;
-
-import static com.google.inject.Guice.createInjector;
+import static com.ibessonov.game.Context.injector;
 
 public class Main {
 
     public static void main(String args[]) {
-        createInjector(binder ->
-            binder.bind(Player.class).to(BridgedPlayer.class)
-        ).getInstance(MainCanvas.class);
+        Game game = injector().getInstance(Game.class);
+        Timer.run(game::tick, 60);
     }
 }

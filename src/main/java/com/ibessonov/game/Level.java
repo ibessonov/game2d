@@ -3,9 +3,11 @@ package com.ibessonov.game;
 import com.ibessonov.game.physics.Gravity;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.ibessonov.game.Constants.TILE;
+import static com.ibessonov.game.resources.Resources.loadImage;
 
 /**
  * @author ibessonov
@@ -16,18 +18,28 @@ public class Level {
     private final int width = 80;
     private final int[][] map = new int[height][width];
 
-    private final Gravity gravity = new Gravity(1, 9 * 3, 3, true);
+    private GoodList<Platform> platforms = new GoodList<>();
 
-    private final Color[] tilesPalette = { Color.CYAN, Color.BLUE, Color.GREEN, Color.MAGENTA, Color.LIGHT_GRAY };
+    private final Gravity gravity = new Gravity(1, 6 * 3, 3, true);
+
+    private final Color[] tilesPalette = { Color.DARK_GRAY, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.LIGHT_GRAY };
 
     public Level() {
-        for (int i = 0; i < map.length; i++) {
-            for (int j = 0; j < map[i].length; j++) {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                if (j * (j + 1 - width) == 0) {
+                    map[i][j] = 2;
+                }
+                if (i * (i + 1 - height) == 0) {
+                    map[i][j] = 1;
+                }
                 if (ThreadLocalRandom.current().nextInt(12) == 0) {
                     map[i][j] = 1;
                 }
             }
         }
+        Platform p = new Platform(4);
+        platforms.add(p);
     }
 
     public int height() {
@@ -36,6 +48,10 @@ public class Level {
 
     public int width() {
         return width;
+    }
+
+    public GoodList<Platform> platforms() {
+        return platforms;
     }
 
     public Gravity gravity() {
@@ -51,8 +67,22 @@ public class Level {
             || j < 0 || j >= width;
     }
 
+    public static BufferedImage BLOCK_SPRITE = loadImage("block.png");
+
     public void drawTile(Graphics g, int i, int j, int x, int y) {
-        g.setColor(tilesPalette[map[i][j]]);
-        g.fillRect(x, y, TILE, TILE);
+        if (map[i][j] > 0) {
+            g.drawImage(BLOCK_SPRITE, x, y, null);
+        } else {
+            g.setColor(tilesPalette[map[i][j]]);
+            g.fillRect(x, y, TILE, TILE);
+        }
+    }
+
+    public boolean backTile(int i, int j) {
+        return map[i][j] != 2;
+    }
+
+    public boolean frontTile(int i, int j) {
+        return map[i][j] == 2;
     }
 }

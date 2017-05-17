@@ -1,21 +1,19 @@
 package com.ibessonov.game.player;
 
-import com.google.inject.Inject;
-import com.ibessonov.game.Bullet;
 import com.ibessonov.game.Level;
+import com.ibessonov.game.SimpleBullet;
 
 import java.awt.*;
 
 /**
  * @author ibessonov
  */
-public class BridgedPlayer implements Player {
+public abstract class BridgedPlayer implements Player {
 
-    private Player delegate;
+    protected Player delegate;
 
-    @Inject
-    BridgedPlayer(DefaultPlayer defaultPlayer) {
-        this.delegate = defaultPlayer;
+    protected BridgedPlayer(Player delegate) {
+        this.delegate = delegate;
     }
 
     @Override
@@ -54,14 +52,23 @@ public class BridgedPlayer implements Player {
     }
 
     @Override
-    public int decreaseLifeLevel(int damage) {
-        return delegate.decreaseLifeLevel(damage);
+    public void decreaseLifeLevel(int damage) {
+        delegate.decreaseLifeLevel(damage);
     }
 
     @Override
-    public void update(Level level) {
-        delegate.update(level);
-//        delegate = delegate.next();
+    public void increaseLifeLevel(int diff) {
+        delegate.increaseLifeLevel(diff);
+    }
+
+    @Override
+    public void updateY(Level level) {
+        delegate.updateY(level);
+    }
+
+    @Override
+    public void updateX(Level level) {
+        delegate.updateX(level);
     }
 
     @Override
@@ -70,12 +77,7 @@ public class BridgedPlayer implements Player {
     }
 
     @Override
-    public Bullet fireBullet() {
+    public SimpleBullet fireBullet() {
         return delegate.fireBullet();
-    }
-
-    @Override
-    public Player next() {
-        return this;
     }
 }

@@ -2,18 +2,18 @@ package com.ibessonov.game.player;
 
 import com.ibessonov.game.*;
 
+import static com.ibessonov.game.Context.inject;
+
 /**
  * @author ibessonov
  */
-public interface Player extends HasLifeLevel, Rectangular, Positionable, Drawable {
+public interface Player extends InGameObject, HasLifeLevel, Rectangular, Positionable, Drawable {
 
-    void update(Level level);
-
-    Bullet fireBullet();
+    SimpleBullet fireBullet();
 
     Player next();
 
     static Player defaultPlayer() {
-        return new DefaultPlayer();
+        return inject(new DefaultPlayer());
     }
 }

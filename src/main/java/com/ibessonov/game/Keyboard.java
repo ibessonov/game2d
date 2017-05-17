@@ -1,5 +1,6 @@
 package com.ibessonov.game;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -15,6 +16,11 @@ public class Keyboard extends KeyAdapter {
     private final Set<Integer> pressedKeys = new HashSet<>();
     private final Set<Integer> tappedKeys = new HashSet<>();
 
+    @Inject
+    public void init(MainCanvas canvas) {
+        canvas.addKeyListener(this);
+    }
+
     @Override
     public void keyPressed(KeyEvent e) {
         if (pressedKeys.add(e.getKeyCode()))
@@ -27,26 +33,34 @@ public class Keyboard extends KeyAdapter {
     }
 
     public boolean isLeftPressed() {
-        return pressedKeys.contains(KeyEvent.VK_LEFT);
+        return isKeyPressed(KeyEvent.VK_LEFT);
     }
 
     public boolean isRightPressed() {
-        return pressedKeys.contains(KeyEvent.VK_RIGHT);
+        return isKeyPressed(KeyEvent.VK_RIGHT);
     }
 
     public boolean isJumpPressed() {
-        return pressedKeys.contains(KeyEvent.VK_SPACE);
+        return isKeyPressed(KeyEvent.VK_SPACE);
     }
 
     public boolean isJumpTapped() {
-        return tappedKeys.remove(KeyEvent.VK_SPACE);
+        return isKeyTapped(KeyEvent.VK_SPACE);
     }
 
     public boolean isFireTapped() {
-        return tappedKeys.remove(KeyEvent.VK_CONTROL);
+        return isKeyTapped(KeyEvent.VK_CONTROL);
     }
 
     public boolean isFlipGravityTapped() {
-        return tappedKeys.remove(KeyEvent.VK_ENTER);
+        return isKeyTapped(KeyEvent.VK_ENTER);
+    }
+
+    public boolean isKeyTapped(int keyCode) {
+        return tappedKeys.remove(keyCode);
+    }
+
+    public boolean isKeyPressed(int keyCode) {
+        return pressedKeys.contains(keyCode);
     }
 }

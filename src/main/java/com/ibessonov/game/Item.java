@@ -1,13 +1,18 @@
 package com.ibessonov.game;
 
+import com.ibessonov.game.player.Player;
+
 import java.awt.*;
 
 import static com.ibessonov.game.Constants.TILE;
+import static com.ibessonov.game.resources.Resources.loadImage;
 
 /**
  * @author ibessonov
  */
-public class Item extends Rectangle implements Drawable {
+public class Item extends Rectangle implements Drawable, Disposable {
+
+    private boolean disposed = false;
 
     public Item(int i, int j) {
         super(TILE, TILE);
@@ -16,10 +21,23 @@ public class Item extends Rectangle implements Drawable {
 
     @Override
     public void draw(Graphics g, int xOffset, int yOffset) {
-        g.setColor(Color.WHITE);
-        g.fillRect(x - xOffset, y - yOffset, width, height);
+        new Sprite(0, 0, width, height, loadImage("health.png"))
+                .draw(x - xOffset, y - yOffset, g);
+    }
 
-        g.setColor(Color.LIGHT_GRAY);
-        g.drawRect(x - xOffset, y - yOffset, width - 1, height - 1);
+    public Player upgrade(Player player) {
+        player.increaseLifeLevel(1);
+        dispose();
+        return player;
+    }
+
+    @Override
+    public void dispose() {
+        disposed = true;
+    }
+
+    @Override
+    public boolean disposed() {
+        return disposed;
     }
 }

@@ -3,12 +3,20 @@ package com.ibessonov.game;
 /**
  * @author ibessonov
  */
-public interface Rectangular {
+public interface Rectangular extends Centered {
 
     int x();
     int y();
     int width();
     int height();
+
+    default int centerX() {
+        return x() + width() / 2;
+    }
+
+    default int centerY() {
+        return y() + height() / 2;
+    }
 
     default boolean intersects(Rectangular other) {
         if (other.x() >= x() + width()) return false;

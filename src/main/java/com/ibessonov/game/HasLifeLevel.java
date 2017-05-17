@@ -9,7 +9,9 @@ public interface HasLifeLevel {
 
     int currentLifeLevel();
 
-    int decreaseLifeLevel(int damage);
+    void decreaseLifeLevel(int damage);
+
+    void increaseLifeLevel(int diff);
 
     default boolean isDead() {
         return currentLifeLevel() <= 0;

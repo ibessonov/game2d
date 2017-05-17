@@ -6,8 +6,6 @@ import com.ibessonov.game.*;
 import java.awt.*;
 
 import static com.ibessonov.game.Constants.TILE;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 /**
  * @author ibessonov
@@ -20,10 +18,15 @@ class DefaultPlayer extends Entity implements Player {
     private int inJump;
 
     private boolean facingRight = true;
+    private boolean facingDown = true;
 
     public DefaultPlayer() {
-        super(TILE - 2, 2 * TILE - 4, 4, 3, 2);
-        decreaseLifeLevel(3);
+        super(TILE - 2, 2 * TILE - 4, 4, 1, 2);
+    }
+
+    @Override
+    public int initialLifeLevel() {
+        return 4;
     }
 
     public void handleJump(Level level) {
@@ -35,48 +38,50 @@ class DefaultPlayer extends Entity implements Player {
                 speedY = level.gravity().directedSpeed(-jumpSpeed);
             }
         }
-        if (handleJump(level, keyboard.isJumpTapped())) {
+        if (super.handleJump(level, keyboard.isJumpTapped())) {
             inJump = 1;
 //            level.gravity().flip(); inJump = 1000; // flips gravity on every jump
         }
-    }
 
-    public void updateJumpSpeed(Level level) {
         if (inJump > 0) {
             inJump++;
         }
-        if (updateJump(level)) {
+        if (super.updateJump(level)) {
             inJump = (speedY == 0) ? 0 : 1000;
         }
     }
 
-    public void update(Level levelMap) {
-        this.handleJump(levelMap);
-        this.updateJumpSpeed(levelMap);
+    @Override
+    public void updateY(Level level) {
+        if (level.gravity().isDown() != facingDown) {
+            facingDown = level.gravity().isDown();
+            inJump = 0;
+        }
+        this.handleJump(level);
+    }
 
-        updateRunSpeed(levelMap, keyboard.isLeftPressed(), keyboard.isRightPressed());
+    @Override
+    public void updateX(Level level) {
+        super.updateRunSpeed(level, keyboard.isLeftPressed(), keyboard.isRightPressed());
+
         if (keyboard.isLeftPressed()) facingRight = false;
         if (keyboard.isRightPressed()) facingRight = true;
     }
 
-    public Bullet fireBullet() {
-        Bullet bullet = new Bullet(0, 0, facingRight);
-        int bulletY = y + 8 + 4;
-        if (facingRight) {
-            bullet.setPosition(x + width - bullet.width(), bulletY);
-        } else {
-            bullet.setPosition(x, bulletY);
-        }
+    public SimpleBullet fireBullet() {
+        SimpleBullet bullet = new SimpleBullet(0, 0, facingRight);
+
+        int bulletX = x + (facingRight ? width + 9: -bullet.width() - 9);
+        int bulletY = y + 12 + (facingDown ? 0 : 1);
+        bullet.setPosition(bulletX, bulletY);
+
         return bullet;
     }
 
     @Override
     public void draw(Graphics g, int xOffset, int yOffset) {
-        g.setColor(Color.RED);
-        g.fillRect(x - xOffset, y - yOffset, width, height);
-
-        g.setColor(new Color(128, 0, 0));
-        g.drawRect(x - xOffset, y - yOffset, width - 1, height - 1);
+        Sprite s = new Sprite(2, 0, width, height, PlayerSprites.PLAYER_SPRITE);
+        s.draw(x - xOffset, y - yOffset, facingRight, facingDown, g);
     }
 
     public void interruptJumping() {
