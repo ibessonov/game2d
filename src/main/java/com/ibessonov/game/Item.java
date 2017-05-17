@@ -3,6 +3,7 @@ package com.ibessonov.game;
 import com.ibessonov.game.player.Player;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 import static com.ibessonov.game.Constants.TILE;
 import static com.ibessonov.game.resources.Resources.loadImage;
@@ -12,6 +13,7 @@ import static com.ibessonov.game.resources.Resources.loadImage;
  */
 public class Item extends Rectangle implements Drawable, Disposable {
 
+    public static final BufferedImage HEALTH_SPRITE = loadImage("health.png");
     private boolean disposed = false;
 
     public Item(int i, int j) {
@@ -21,7 +23,7 @@ public class Item extends Rectangle implements Drawable, Disposable {
 
     @Override
     public void draw(Graphics g, int xOffset, int yOffset) {
-        new Sprite(0, 0, width, height, loadImage("health.png"))
+        new Sprite(0, 0, width, height, HEALTH_SPRITE)
                 .draw(x - xOffset, y - yOffset, g);
     }
 
