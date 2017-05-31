@@ -7,6 +7,8 @@ import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 
+import static java.awt.event.KeyEvent.*;
+
 /**
  * @author ibessonov
  */
@@ -33,27 +35,35 @@ public class Keyboard extends KeyAdapter {
     }
 
     public boolean isLeftPressed() {
-        return isKeyPressed(KeyEvent.VK_LEFT);
+        return isKeyPressed(VK_LEFT);
     }
 
     public boolean isRightPressed() {
-        return isKeyPressed(KeyEvent.VK_RIGHT);
+        return isKeyPressed(VK_RIGHT);
+    }
+
+    public boolean isUpPressed() {
+        return isKeyPressed(VK_UP);
+    }
+
+    public boolean isDownPressed() {
+        return isKeyPressed(VK_DOWN);
     }
 
     public boolean isJumpPressed() {
-        return isKeyPressed(KeyEvent.VK_SPACE);
+        return isKeyPressed(VK_SPACE);
     }
 
     public boolean isJumpTapped() {
-        return isKeyTapped(KeyEvent.VK_SPACE);
+        return isKeyTapped(VK_SPACE);
     }
 
     public boolean isFireTapped() {
-        return isKeyTapped(KeyEvent.VK_CONTROL);
+        return isKeyTapped(VK_CONTROL);
     }
 
     public boolean isFlipGravityTapped() {
-        return isKeyTapped(KeyEvent.VK_ENTER);
+        return isKeyTapped(VK_ENTER);
     }
 
     public boolean isKeyTapped(int keyCode) {

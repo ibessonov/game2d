@@ -1,6 +1,7 @@
 package com.ibessonov.game.player;
 
 import com.ibessonov.game.Level;
+import com.ibessonov.game.Rectangular;
 import com.ibessonov.game.SimpleBullet;
 
 import java.awt.*;
@@ -24,6 +25,16 @@ public abstract class BridgedPlayer implements Player {
     @Override
     public int y() {
         return delegate.y();
+    }
+
+    @Override
+    public int centerX() {
+        return delegate.centerX();
+    }
+
+    @Override
+    public int centerY() {
+        return delegate.centerY();
     }
 
     @Override
@@ -79,5 +90,10 @@ public abstract class BridgedPlayer implements Player {
     @Override
     public SimpleBullet fireBullet() {
         return delegate.fireBullet();
+    }
+
+    @Override
+    public boolean intersects(Rectangular other) {
+        return delegate.intersects(other);
     }
 }

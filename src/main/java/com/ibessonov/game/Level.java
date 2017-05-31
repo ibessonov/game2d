@@ -20,9 +20,7 @@ public class Level {
 
     private GoodList<Platform> platforms = new GoodList<>();
 
-    private final Gravity gravity = new Gravity(1, 6 * 3, 3, true);
-
-    private final Color[] tilesPalette = { Color.DARK_GRAY, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.LIGHT_GRAY };
+    private final Gravity gravity = new Gravity(1, 8 * 3, 3, true);
 
     public Level() {
         for (int i = 0; i < height; i++) {
@@ -38,7 +36,14 @@ public class Level {
                 }
             }
         }
-        Platform p = new Platform(4);
+        map[height - 3][1] = 1;
+        map[height - 3][3] =
+        map[height - 4][3] =
+        map[height - 5][3] =
+        map[height - 6][3] = 3;
+        map[height - 7][3] = 1;
+
+        Platform p = new CircularPlatform(3 * TILE, TILE);
         platforms.add(p);
     }
 
@@ -62,19 +67,23 @@ public class Level {
         return isOutOfBounds(i, j) || map[i][j] == 1;
     }
 
+    public boolean isLadder(int i, int j) {
+        return !isOutOfBounds(i, j) && map[i][j] == 3;
+    }
+
     public boolean isOutOfBounds(int i, int j) {
         return i < 0 || i >= height
             || j < 0 || j >= width;
     }
 
     public static BufferedImage BLOCK_SPRITE = loadImage("block.png");
+    public static BufferedImage LADDER_SPRITE = loadImage("ladder.png");
 
     public void drawTile(Graphics g, int i, int j, int x, int y) {
-        if (map[i][j] > 0) {
+        if (map[i][j] == 3) {
+            g.drawImage(LADDER_SPRITE, x, y, null);
+        } else if (map[i][j] > 0) {
             g.drawImage(BLOCK_SPRITE, x, y, null);
-        } else {
-            g.setColor(tilesPalette[map[i][j]]);
-            g.fillRect(x, y, TILE, TILE);
         }
     }
 

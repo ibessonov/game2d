@@ -7,7 +7,7 @@ import static com.ibessonov.game.Context.inject;
 /**
  * @author ibessonov
  */
-public interface Player extends InGameObject, HasLifeLevel, Rectangular, Positionable, Drawable {
+public interface Player extends Updatable, HasLifeLevel, Rectangular, Positionable, Drawable {
 
     SimpleBullet fireBullet();
 

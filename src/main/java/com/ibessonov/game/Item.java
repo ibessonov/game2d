@@ -5,7 +5,7 @@ import com.ibessonov.game.player.Player;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import static com.ibessonov.game.Constants.TILE;
+import static com.ibessonov.game.Constants.*;
 import static com.ibessonov.game.resources.Resources.loadImage;
 
 /**
@@ -23,6 +23,12 @@ public class Item extends Rectangle implements Drawable, Disposable {
 
     @Override
     public void draw(Graphics g, int xOffset, int yOffset) {
+        if (x - xOffset <= -width || x - xOffset >= SCREEN_WIDTH) {
+            return;
+        }
+        if (y - yOffset <= -height || y - yOffset >= SCREEN_HEIGHT) {
+            return;
+        }
         new Sprite(0, 0, width, height, HEALTH_SPRITE)
                 .draw(x - xOffset, y - yOffset, g);
     }

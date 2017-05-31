@@ -6,7 +6,7 @@ import java.util.List;
 import static java.util.Collections.binarySearch;
 import static java.util.Collections.unmodifiableList;
 
-public class GoodList<T extends Centered & Disposable> {
+public class GoodList<T extends Centered> {
 
     private List<T> list = new ArrayList<>();
     private ModifiablePosition mp = new ModifiablePosition(0, 0);
@@ -36,11 +36,7 @@ public class GoodList<T extends Centered & Disposable> {
     }
 
     public List<T> list() {
-        return unmodifiableList(list);
-    }
-
-    public void disposeWaste() {
-        list.removeIf(t -> t.disposed()); // cannot be converted to method reference :(
+        return list;
     }
 
     private static class ModifiablePosition implements Centered {

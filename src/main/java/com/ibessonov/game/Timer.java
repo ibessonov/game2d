@@ -8,10 +8,26 @@ import java.util.concurrent.BlockingQueue;
  */
 public class Timer {
 
+    private static final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(1);
+
+    @SuppressWarnings("InfiniteLoopStatement")
+    private static final Thread readerThread = new Thread(() -> {
+        try {
+            while (true) {
+                Runnable task = queue.take();
+                task.run();
+            }
+        } catch (InterruptedException ignored) {
+        }
+    });
+
+    static {
+        readerThread.start();
+    }
+
     @SuppressWarnings("InfiniteLoopStatement")
     public static void run(Runnable callback, int fps) {
-        BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(1);
-        Thread writerThread = new Thread(() -> {
+        new Thread(() -> {
             int currentFrame = 0;
             try {
                 while (true) {
@@ -23,28 +39,16 @@ public class Timer {
                     if (nextFrame > fps) nextFrame = 1;
                     currentFrame = nextFrame;
                 }
-            } catch (InterruptedException e) {
-                handleInterruptedException(e);
+            } catch (InterruptedException ignored) {
             }
-        });
-
-        Thread readerThread = new Thread(() -> {
-            try {
-                while (true) {
-                    Runnable task = queue.take();
-                    task.run();
-                }
-            } catch (InterruptedException e) {
-                handleInterruptedException(e);
-            }
-        });
-
-        readerThread.start();
-        writerThread.start();
+        }).start();
     }
 
-    private static void handleInterruptedException(InterruptedException e) {
-        e.printStackTrace();
-        System.exit(1);
+    public static void stop() {
+        readerThread.interrupt();
+        try {
+            readerThread.join();
+        } catch (InterruptedException ignored) {
+        }
     }
 }

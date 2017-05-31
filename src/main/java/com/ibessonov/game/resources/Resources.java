@@ -14,8 +14,8 @@ public class Resources {
     public static BufferedImage loadImage(String name) {
         try {
             return ImageIO.read(CL.getResource(name));
-        } catch (IOException ignored) {
-            return null;
+        } catch (IOException ioException) {
+            throw new RuntimeException(ioException);
         }
     }
 }

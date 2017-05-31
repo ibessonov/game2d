@@ -1,6 +1,5 @@
 package com.ibessonov.game;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -11,12 +10,12 @@ import static org.junit.Assert.assertEquals;
 
 public class GoodListTest {
 
-    private static class Position implements Centered, Disposable {
+    private static class Position implements Centered {
 
-        public int x;
-        public int y;
+        int x;
+        int y;
 
-        public Position(int x, int y) {
+        Position(int x, int y) {
             this.x = x;
             this.y = y;
         }
@@ -30,11 +29,6 @@ public class GoodListTest {
         public int centerY() {
             return y;
         }
-
-        @Override
-        public boolean disposed() {
-            return true;
-        }
     }
 
     private GoodList<Position> list;
@@ -42,11 +36,6 @@ public class GoodListTest {
     @Before
     public void setUp() throws Exception {
         list = new GoodList<>();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        list.disposeWaste();
     }
 
     @Test

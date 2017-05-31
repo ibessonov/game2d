@@ -1,6 +1,7 @@
 package com.ibessonov.game;
 
 import com.ibessonov.game.physics.SpeedX;
+import com.ibessonov.game.util.BiIntPredicate;
 
 import static com.ibessonov.game.Constants.TILE;
 import static com.ibessonov.game.Conversion.toTile;
@@ -11,16 +12,18 @@ import static java.lang.Math.min;
 /**
  * @author ibessonov
  */
-public abstract class Entity extends Rectangle implements InGameObject, Drawable, HasLifeLevel {
+public abstract class Entity extends Rectangle implements Updatable, Drawable, HasLifeLevel {
 
-    public SpeedX speedX;
-    public int speedY;
+    protected SpeedX speedX;
+    protected int speedY;
 
-    public int jumpSpeed;
+    protected int jumpSpeed;
 
-    private Platform stickyPlatform;
-    private int platformDx;
-    private boolean gravityDown = true;
+    private Platform currentPlatform;
+    private int currentPlatformDx;
+
+    protected boolean facingRight = true;
+    protected boolean facingDown = true;
 
     private int lifeLevel = initialLifeLevel();
 
@@ -32,13 +35,24 @@ public abstract class Entity extends Rectangle implements InGameObject, Drawable
         this.jumpSpeed = jumpSpeed;
     }
 
-    public boolean updateJump(Level level) {
+    public void setOrientation(boolean facingRight, boolean facingDown) {
+        this.facingRight = facingRight;
+        this.facingDown = facingDown;
+    }
+
+    @Override
+    public void updateY(Level level) {
+        if (facingDown != level.gravity().isDown()) {
+            clearCurrentPlatform();
+        }
+        facingDown = level.gravity().isDown();
+    }
+
+    public boolean updateGravityAndCollisions(Level level) {
         speedY = level.gravity().accelerate(speedY);
 
-        int ySpeedScaled = level.gravity().scale(speedY);
-        y += ySpeedScaled;
+        y += level.gravity().scale(speedY);
 
-//        if (ySpeedScaled != 0) {
         if (handleCeilCollision(level)) {
             speedY = max(speedY, 0);
             return true;
@@ -47,55 +61,68 @@ public abstract class Entity extends Rectangle implements InGameObject, Drawable
             speedY = min(speedY, 0);
             return true;
         }
-//        }
         return false;
     }
 
+    protected void updateHorizontalFacing(boolean moveLeft, boolean moveRight) {
+        facingRight = moveRight || facingRight && !moveLeft;
+    }
+
     public void updateRunSpeed(Level level, boolean moveLeft, boolean moveRight) {
-        if (stickyPlatform != null) {
-            if (stickyPlatform.disposed()) {
-                stickyPlatform = null;
+        updateHorizontalFacing(moveLeft, moveRight);
+
+        if (currentPlatform != null) {
+            if (currentPlatform.disposed()) {
+                clearCurrentPlatform();
             } else {
-                x = stickyPlatform.x + platformDx;
+                x = currentPlatform.x() + currentPlatformDx;
             }
         }
         speedX.update(moveLeft, moveRight);
 
-        int xSpeedScaled = speedX.value();
-        x += xSpeedScaled;
-//        if (xSpeedScaled != 0) {
+        x += speedX.value();
         handleLeftCollision(level);
         handleRightCollision(level);
-//        }
 
-        stickyPlatform = platformBelowMe(level);
-        if (stickyPlatform != null) {
-            platformDx = x - stickyPlatform.x;
+        setCurrentPlatform(platformBelowMe(level));
+        if (currentPlatform != null) {
+            currentPlatformDx = x - currentPlatform.x();
         }
     }
 
     public boolean handleJump(Level level, boolean jump) {
-        if (gravityDown != level.gravity().isDown()) {
-            stickyPlatform = null;
-        }
-        gravityDown = level.gravity().isDown();
-        if (stickyPlatform != null) {
-            if (stickyPlatform.disposed()) {
-                stickyPlatform = null;
+        if (currentPlatform != null) {
+            if (currentPlatform.disposed()) {
+                clearCurrentPlatform();
             } else {
-                if (level.gravity().isDown()) {
-                    y = stickyPlatform.y - height;
+                if (facingDown) {
+                    y = currentPlatform.y() - height;
                 } else {
-                    y = stickyPlatform.y + stickyPlatform.height;
+                    y = currentPlatform.y() + currentPlatform.height();
                 }
             }
         }
         if (jump && isOnSurface(level)) {
             speedY = level.gravity().directedSpeed(-jumpSpeed);
-            stickyPlatform = null;
+            clearCurrentPlatform();
             return true;
         }
         return false;
+    }
+
+    private void setCurrentPlatform(Platform platform) {
+        clearCurrentPlatform();
+        if (platform != null) {
+            platform.add(this);
+            currentPlatform = platform;
+        }
+    }
+
+    private void clearCurrentPlatform() {
+        if (currentPlatform != null) {
+            currentPlatform.remove(this);
+            currentPlatform = null;
+        }
     }
 
     @Override
@@ -119,11 +146,11 @@ public abstract class Entity extends Rectangle implements InGameObject, Drawable
     }
 
     private Platform platformBelowMe(Level level) {
-        int sign = level.gravity().isDown() ? 1 : -1;
+        int sign = facingDown ? 1 : -1;
 
         y += sign;
         for (Platform platform : level.platforms().list()) {
-            if (signum(platform.y - y) == sign && intersects(platform)) {
+            if (signum(platform.y() - y) == sign && intersects(platform)) {
                 y -= sign;
                 return platform;
             }
@@ -135,15 +162,26 @@ public abstract class Entity extends Rectangle implements InGameObject, Drawable
 
     protected boolean handleCeilCollision(Level level) {
         boolean tilesCollision = horizontalTilesCollision(toTile(y), level);
+        if (tilesCollision && facingDown) {
+            x--;
+            tilesCollision = horizontalTilesCollision(toTile(y), level);
+            if (tilesCollision) {
+                x += 2;
+                tilesCollision = horizontalTilesCollision(toTile(y), level);
+                if (tilesCollision) {
+                    x--;
+                }
+            }
+        }
         if (tilesCollision) {
             y = (toTile(y) + 1) * TILE;
         }
         for (Platform platform : level.platforms().list()) {
             if (platform.centerY() < centerY() && intersects(platform)) {
-                y = platform.y + platform.height;
-                if (!level.gravity().isDown()) {
-                    stickyPlatform = platform;
-                    platformDx = x - platform.x;
+                y = platform.y() + platform.height();
+                if (!facingDown) {
+                    setCurrentPlatform(platform);
+                    currentPlatformDx = x - platform.x();
                 }
                 return true;
             }
@@ -153,16 +191,27 @@ public abstract class Entity extends Rectangle implements InGameObject, Drawable
 
     protected boolean handleFloorCollision(Level level) {
         boolean tilesCollision = horizontalTilesCollision(toTile(y + height - 1), level);
+        if (tilesCollision && !facingDown) {
+            x--;
+            tilesCollision = horizontalTilesCollision(toTile(y + height - 1), level);
+            if (tilesCollision) {
+                x += 2;
+                tilesCollision = horizontalTilesCollision(toTile(y + height - 1), level);
+                if (tilesCollision) {
+                    x--;
+                }
+            }
+        }
         if (tilesCollision) {
             y = toTile(y + height - 1) * TILE - height;
             // bouncing could be added here
         }
         for (Platform platform : level.platforms().list()) {
             if (platform.centerY() > centerY() && intersects(platform)) {
-                y = platform.y - height;
-                if (level.gravity().isDown()) {
-                    stickyPlatform = platform;
-                    platformDx = x - platform.x;
+                y = platform.y() - height;
+                if (facingDown) {
+                    setCurrentPlatform(platform);
+                    currentPlatformDx = x - platform.x();
                 }
                 return true;
             }
@@ -178,7 +227,8 @@ public abstract class Entity extends Rectangle implements InGameObject, Drawable
         }
         for (Platform platform : level.platforms().list()) {
             if (platform.centerX() < centerX() && intersects(platform)) {
-                x = platform.x + platform.width;
+                x = platform.x() + platform.width();
+                speedX.stop();
             }
         }
     }
@@ -191,14 +241,15 @@ public abstract class Entity extends Rectangle implements InGameObject, Drawable
         }
         for (Platform platform : level.platforms().list()) {
             if (platform.centerX() > centerX() && intersects(platform)) {
-                x = platform.x - width;
+                x = platform.x() - width;
+                speedX.stop();
             }
         }
     }
 
     protected boolean isOnSurface(Level level) {
         if (platformBelowMe(level) != null) return true;
-        if (level.gravity().isDown()) {
+        if (facingDown) {
             return horizontalTilesCollision(toTile(y + height), level);
         } else {
             return horizontalTilesCollision(toTile(y - 1), level);
@@ -215,8 +266,12 @@ public abstract class Entity extends Rectangle implements InGameObject, Drawable
     }
 
     protected boolean verticalCollision(int j, Level level) {
+        return verticalCollision(j, level::isSolid);
+    }
+
+    protected boolean verticalCollision(int j, BiIntPredicate condition) {
         for (int i = toTile(y), iFloor = toTile(y + height - 1); i <= iFloor; i++) {
-            if (level.isSolid(i, j)) {
+            if (condition.test(i, j)) {
                 return true;
             }
         }

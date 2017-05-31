@@ -5,6 +5,7 @@ import java.awt.*;
 /**
  * @author ibessonov
  */
+//TODO stops on platforms =)
 public class SimpleBullet extends Entity implements Bullet {
 
     private boolean disposed = false;
@@ -31,7 +32,6 @@ public class SimpleBullet extends Entity implements Bullet {
 
     @Override
     public void updateY(Level level) {
-
     }
 
     @Override

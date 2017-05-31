@@ -3,7 +3,7 @@ package com.ibessonov.game;
 /**
  * @author ibessonov
  */
-public interface HasLifeLevel {
+public interface HasLifeLevel extends Disposable {
 
     int initialLifeLevel();
 
@@ -15,5 +15,15 @@ public interface HasLifeLevel {
 
     default boolean isDead() {
         return currentLifeLevel() <= 0;
+    }
+
+    @Override
+    default void dispose() {
+        decreaseLifeLevel(currentLifeLevel());
+    }
+
+    @Override
+    default boolean disposed() {
+        return isDead();
     }
 }

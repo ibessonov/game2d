@@ -2,9 +2,12 @@ package com.ibessonov.game;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.ibessonov.game.resources.Resources;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -21,12 +24,24 @@ class MainCanvas extends Canvas {
             .getLocalGraphicsEnvironment().getScreenDevices()[0];
 
     @Inject
-    void initComponents() {
-        JFrame jFrame = new JFrame("Gui");
+    private JFrame jFrame;
 
+    private final BufferedImage image = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+
+    @Inject
+    void initComponents(CloseHandler closeHandler) {
+        jFrame.setTitle("Gui");
+        jFrame.setIconImage(Resources.loadImage("icon.png"));
+
+        jFrame.addWindowListener(new WindowAdapter() {
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                closeHandler.handleClose();
+            }
+        });
         jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-//        jFrame.setResizable(false);
-        setMinimumSize(new Dimension(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT));
+        setMinimumSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
         setPreferredSize(getMinimumSize());
 
         jFrame.setLayout(new BorderLayout());
@@ -38,15 +53,14 @@ class MainCanvas extends Canvas {
 
         jFrame.pack();
 
-//        jFrame.setFocusTraversalKeysEnabled(true);
         setFocusable(true);
 
         createBufferStrategy(3);
         jFrame.setVisible(true);
     }
 
+    // these parameters suck
     public void render(Consumer<Graphics> callback, Consumer<int[]> postEffects) {
-        BufferedImage image = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
         Graphics g = image.getGraphics();
 
         callback.accept(g);
@@ -60,10 +74,21 @@ class MainCanvas extends Canvas {
         bsg.setColor(Color.BLACK);
         bsg.fillRect(0, 0, getWidth(), getHeight());
 
-        int scale = min(getWidth() / SCREEN_WIDTH, getHeight() / SCREEN_HEIGHT);
-        bsg.drawImage(image, (getWidth() - SCREEN_WIDTH * scale) / 2, (getHeight() - SCREEN_HEIGHT * scale) / 2,
-                SCREEN_WIDTH * scale, SCREEN_HEIGHT * scale, null);
+        bsg.drawImage(image, getXOffset(), getYOffset(),
+                SCREEN_WIDTH * getScale(), SCREEN_HEIGHT * getScale(), null);
         bsg.dispose();
         bs.show();
+    }
+
+    public int getXOffset() {
+        return (getWidth() - SCREEN_WIDTH * getScale()) / 2;
+    }
+
+    public int getYOffset() {
+        return (getHeight() - SCREEN_HEIGHT * getScale()) / 2;
+    }
+
+    public int getScale() {
+        return min(getWidth() / SCREEN_WIDTH, getHeight() / SCREEN_HEIGHT);
     }
 }

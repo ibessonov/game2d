@@ -12,7 +12,7 @@ public interface Conversion {
         return (z / TILE) - 1;
     }
 
-    static int toScreen(int i) {
-        return i * TILE;
+    static int toScreen(int k) {
+        return k * TILE;
     }
 }
