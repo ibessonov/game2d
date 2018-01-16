@@ -9,7 +9,6 @@ import com.ibessonov.game.util.BiIntPredicate;
 import com.ibessonov.game.util.Container;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -40,7 +39,7 @@ public class Game {
 
     @Inject
     private Keyboard keyboard;
-    @Inject
+    //    @Inject
     private Level level;
 
     private final ProxyPlayer player = new ProxyPlayer(defaultPlayer());
@@ -72,32 +71,43 @@ public class Game {
                 if (level.isOutOfBounds(i, j)) return;
 
                 System.out.printf("Clicked on (%d, %d)\n", i, j);
+                level.inc(i, j);
             }
         });
 
-        player.setPosition(2 * TILE, (level.height() - 2) * TILE);
+        loadLevelData(new Level(1));
+
+        player.setPosition(2 * TILE, (level.height() - 8) * TILE);
+    }
+
+    private void loadLevelData(Level level) {
+        this.level = level;
+
+        enemies.clear();
+        items.clear();
 
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 5; i++) {
             BasicEnemy enemy = new BasicEnemy();
             enemy.setPosition(toScreen(rnd.nextInt(level.width())),
                     toScreen(rnd.nextInt(level.height())));
             enemies.add(enemy);
         }
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 5; i++) {
             items.add(new Item(rnd.nextInt(level.height()), rnd.nextInt(level.width())));
         }
+
         updatables = join(list(level.platforms().list()), singleton(player), list(enemies), list(bullets.list()));
         disposables = join(list(items), list(enemies), list(bullets.list()));
         drawables = join(singleton(tiles(level, level::backTile)),
-                         list(level.platforms().list()), list(items), list(enemies),
-                         list(bullets.list()), singleton(player),
-                         singleton(tiles(level, level::frontTile))
+                list(level.platforms().list()), list(bullets.list()),
+                list(items), singleton(tiles(level, level::frontTile)), list(enemies), singleton(player)
         );
     }
 
     public void tick() {
         frame.tick();
+        keyboard.poll();
         update();
         canvas.render(this::render, this::postEffects);
     }
@@ -105,7 +115,7 @@ public class Game {
     private void update() {
         player.next();
 
-        if (keyboard.isKeyTapped(KeyEvent.VK_X)) {
+        if (keyboard.isNightVisionKeyTapped()) {
             nightVision ^= true;
         }
         if (keyboard.isFlipGravityTapped()) {
@@ -123,7 +133,7 @@ public class Game {
 
         bullets.sort();
         for (BasicEnemy enemy : enemies) {
-            for (Bullet bullet : bullets.findNearest(enemy.x - 5, enemy.x + enemy.width + 5)) {
+            for (Bullet bullet : bullets.findNearest(enemy.x() - 5, enemy.x() + enemy.width + 5)) {
                 if (bullet.intersects(enemy)) {
                     enemy.decreaseLifeLevel(bullet.damage());
                     bullet.dispose();
@@ -136,11 +146,40 @@ public class Game {
         }
         disposables.removeIf(Disposable::disposed);
 
-        if (keyboard.isFireTapped() || keyboard.isKeyPressed(KeyEvent.VK_SHIFT)) {
-            bullets.add(player.fireBullet());
+        if (keyboard.isFireTapped()/* || keyboard.isFirePressed()*/) {
+            SimpleBullet bullet = player.fireBullet();
+            if (bullet != null) {
+                bullets.add(bullet);
+            }
         }
 
         int playerLocalX = player.x() - xOffset;
+        int playerLocalY = player.y() - yOffset;
+        for (Trigger trigger : level.triggers()) {
+            if (trigger.intersects(player)) {
+                loadLevelData(new Level(trigger.levelIndex()));
+                int playerX = player.x() - trigger.x() + trigger.toX();
+                int playerY = player.y() - trigger.y() + trigger.toY();
+                if (trigger.horizontal()) {
+                    if (playerLocalX > SCREEN_WIDTH / 2) {
+                        playerLocalX -= SCREEN_WIDTH;
+                    } else {
+                        playerLocalX += SCREEN_WIDTH;
+                    }
+                } else {
+                    if (playerLocalY > SCREEN_HEIGHT / 2) {
+                        playerLocalY -= SCREEN_HEIGHT;
+                    } else {
+                        playerLocalY += SCREEN_HEIGHT;
+                    }
+                }
+                xOffset = playerX - playerLocalX;
+                yOffset = playerY - playerLocalY;
+                player.setPosition(playerX, playerY);
+                return;
+            }
+        }
+
         int leftBorder = SCREEN_WIDTH / 2 - 2 * TILE;
         int rightBorder = SCREEN_WIDTH / 2 + TILE;
         int offset = 0;
@@ -155,7 +194,6 @@ public class Game {
         xOffset = max(0, xOffset);
         xOffset = min(level.width() * TILE - SCREEN_WIDTH, xOffset);
 
-        int playerLocalY = player.y() - yOffset;
         int upperBorder = SCREEN_HEIGHT / 2 - 7 * TILE / 2;
         int lowerBorder = SCREEN_HEIGHT / 2 + 1 * TILE / 2;
         offset = 0;
@@ -182,8 +220,10 @@ public class Game {
     }
 
     private void render(Graphics g) {
-        int backX = xOffset * (background.getWidth() - SCREEN_WIDTH) / (toScreen(level.width()) - SCREEN_WIDTH);
-        int backY = yOffset * (background.getHeight() - SCREEN_HEIGHT) / (toScreen(level.height()) - SCREEN_HEIGHT);
+        int dx = toScreen(level.width()) - SCREEN_WIDTH;
+        int backX = dx == 0 ? 0 : xOffset * (background.getWidth() - SCREEN_WIDTH) / dx;
+        int dy = toScreen(level.height()) - SCREEN_HEIGHT;
+        int backY = dy == 0 ? 0 : yOffset * (background.getHeight() - SCREEN_HEIGHT) / dy;
         g.drawImage(background, -backX, -backY, null);
 
         drawables.forEach(d -> d.draw(g, xOffset, yOffset));
@@ -199,10 +239,6 @@ public class Game {
 
 
     private void postEffects(int[] data) {
-        if (nightVision) {
-            nightVision(data);
-            noise(data, 16);
-        }
         int[][] matrix = {
             {1, 2, 1},
             {2, 36, 2},
@@ -210,6 +246,11 @@ public class Game {
         };
         blur(data, matrix);
 //        blur(data, matrix);
+
+        if (nightVision) {
+            nightVision(data);
+            noise(data, 16);
+        }
     }
 
     public void start() {

@@ -1,6 +1,7 @@
 package com.ibessonov.game;
 
 import javax.inject.Singleton;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author ibessonov
@@ -8,13 +9,13 @@ import javax.inject.Singleton;
 @Singleton
 public class FrameHolder {
 
-    private volatile int current = 0;
+    private final AtomicInteger current = new AtomicInteger();
 
     public void tick() {
-        current++;
+        current.getAndIncrement();
     }
 
     public int currentFrame() {
-        return current;
+        return current.get();
     }
 }

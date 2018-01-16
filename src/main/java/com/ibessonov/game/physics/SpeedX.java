@@ -12,13 +12,11 @@ public class SpeedX {
     private int startingSpeed;
     private int acceleration;
     private int maxSpeed;
-    private int scale;
 
-    public SpeedX(int initialSpeed, int acceleration, int maxSpeed, int scale) {
+    public SpeedX(int initialSpeed, int acceleration, int maxSpeed) {
         this.startingSpeed = initialSpeed;
         this.acceleration = acceleration;
         this.maxSpeed = maxSpeed;
-        this.scale = scale;
     }
 
     public void stop() {
@@ -26,7 +24,7 @@ public class SpeedX {
     }
 
     public int value() {
-        return value / scale;
+        return value;
     }
 
     public void update(boolean moveLeft, boolean moveRight) {

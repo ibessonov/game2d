@@ -1,6 +1,7 @@
 package com.ibessonov.game;
 
 import com.google.inject.Injector;
+import com.ibessonov.game.guice.GameGuiceModule;
 
 import static com.google.inject.Guice.createInjector;
 
@@ -19,6 +20,6 @@ public class Context {
     }
 
     private static class InjectorHolder {
-        private static final Injector INJECTOR = createInjector();
+        private static final Injector INJECTOR = createInjector(new GameGuiceModule());
     }
 }

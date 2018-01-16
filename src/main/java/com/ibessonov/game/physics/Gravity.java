@@ -7,27 +7,23 @@ public class Gravity {
 
     private int acceleration;
     private int terminalVelocity;
-    private int scale;
     private int direction;
+    public static final int SCALE = 8;
 
-    public Gravity(int acceleration, int terminalVelocity, int scale, boolean down) {
-        this.acceleration = acceleration;
-        this.terminalVelocity = terminalVelocity;
-        this.scale = scale;
+    public Gravity(float acceleration, float terminalVelocity, boolean down) {
+        this.acceleration = fromFloat(acceleration);
+        this.terminalVelocity = fromFloat(terminalVelocity);
         this.direction = down ? 1 : -1;
     }
 
-    public int directedSpeed(int speed) {
-        return direction * speed * scale;
+    public float directedSpeed(float speed) {
+        return direction * speed;
     }
 
-    public int accelerate(int speed) {
-        speed += direction * acceleration;
-        return speed * direction <= terminalVelocity ? speed : terminalVelocity * direction;
-    }
-
-    public int scale(int speed) {
-        return speed / scale;
+    public float accelerate(float speed) {
+        int speedInt = fromFloat(speed);
+        speedInt += direction * acceleration;
+        return fromInt(speedInt * direction <= terminalVelocity ? speedInt : terminalVelocity * direction);
     }
 
     public boolean isDown() {
@@ -36,5 +32,17 @@ public class Gravity {
 
     public void flip() {
         direction *= -1;
+    }
+
+    public static int fromFloat(float speed) {
+        return Math.round(speed * SCALE);
+    }
+
+    public static  float fromInt(int speed) {
+        return 1f * speed / SCALE;
+    }
+
+    public static int normalize(int a) {
+        return fromFloat(fromInt(a));
     }
 }

@@ -12,7 +12,7 @@ class CircularPlatform extends Rectangle implements Platform {
 
     private int counter = 0;
     private int radius = 50;
-    private int max = 192;
+    private int max = 128;
 
     @Override
     public void updateY(Level level) {

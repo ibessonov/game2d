@@ -20,7 +20,7 @@ import static java.lang.Math.min;
 @Singleton
 class MainCanvas extends Canvas {
 
-    static GraphicsDevice device = GraphicsEnvironment
+    private static final GraphicsDevice DEVICE = GraphicsEnvironment
             .getLocalGraphicsEnvironment().getScreenDevices()[0];
 
     @Inject
@@ -47,9 +47,10 @@ class MainCanvas extends Canvas {
         jFrame.setLayout(new BorderLayout());
         jFrame.add(this, BorderLayout.CENTER);
 
-//        jFrame.setExtendedState(jFrame.getExtendedState() | JFrame.MAXIMIZED_BOTH);
-//        jFrame.setUndecorated(true);
-//        device.setFullScreenWindow(jFrame);
+        jFrame.setExtendedState(jFrame.getExtendedState() | JFrame.MAXIMIZED_BOTH);
+        jFrame.setUndecorated(true);
+        DEVICE.setFullScreenWindow(jFrame);
+        setPreferredSize(new Dimension(DEVICE.getDisplayMode().getWidth(), DEVICE.getDisplayMode().getHeight()));
 
         jFrame.pack();
 

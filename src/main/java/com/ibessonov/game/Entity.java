@@ -5,6 +5,7 @@ import com.ibessonov.game.util.BiIntPredicate;
 
 import static com.ibessonov.game.Constants.TILE;
 import static com.ibessonov.game.Conversion.toTile;
+import static com.ibessonov.game.physics.Gravity.*;
 import static java.lang.Integer.signum;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -12,12 +13,18 @@ import static java.lang.Math.min;
 /**
  * @author ibessonov
  */
-public abstract class Entity extends Rectangle implements Updatable, Drawable, HasLifeLevel {
+public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Rectangular, Positionable {
+
+    private int x;
+    private int y;
+
+    protected final int width;
+    protected final int height;
 
     protected SpeedX speedX;
-    protected int speedY;
 
-    protected int jumpSpeed;
+    protected float speedY;
+    protected float jumpSpeed;
 
     private Platform currentPlatform;
     private int currentPlatformDx;
@@ -27,12 +34,47 @@ public abstract class Entity extends Rectangle implements Updatable, Drawable, H
 
     private int lifeLevel = initialLifeLevel();
 
-    public Entity(int width, int height, int jumpSpeed, int initialSpeed, int maxSpeed) {
-        super(width, height);
+    public Entity(int width, int height, float jumpSpeed, float initialSpeed, float maxSpeed, float acceleration) {
+        this.width = width;
+        this.height = height;
 
-        int scale = 6;
-        this.speedX = new SpeedX(initialSpeed * scale, 1, maxSpeed * scale, scale);
+        this.speedX = new SpeedX(fromFloat(initialSpeed), fromFloat(acceleration), fromFloat(maxSpeed));
         this.jumpSpeed = jumpSpeed;
+    }
+
+    @Override
+    public void setPosition(int x, int y) {
+        setX(x);
+        setY(y);
+    }
+
+    protected void setY(int y) {
+        this.y = fromFloat(y);
+    }
+
+    protected void setX(int x) {
+        this.x = fromFloat(x);
+    }
+
+
+    @Override
+    public int x() {
+        return Math.round(fromInt(x));
+    }
+
+    @Override
+    public int y() {
+        return Math.round(fromInt(y));
+    }
+
+    @Override
+    public int width() {
+        return width;
+    }
+
+    @Override
+    public int height() {
+        return height;
     }
 
     public void setOrientation(boolean facingRight, boolean facingDown) {
@@ -49,10 +91,16 @@ public abstract class Entity extends Rectangle implements Updatable, Drawable, H
     }
 
     public boolean updateGravityAndCollisions(Level level) {
+        updateGravity(level);
+        return updateYCollision(level);
+    }
+
+    protected void updateGravity(Level level) {
         speedY = level.gravity().accelerate(speedY);
+        addSpeedYtoY();
+    }
 
-        y += level.gravity().scale(speedY);
-
+    protected boolean updateYCollision(Level level) {
         if (handleCeilCollision(level)) {
             speedY = max(speedY, 0);
             return true;
@@ -75,19 +123,32 @@ public abstract class Entity extends Rectangle implements Updatable, Drawable, H
             if (currentPlatform.disposed()) {
                 clearCurrentPlatform();
             } else {
-                x = currentPlatform.x() + currentPlatformDx;
+                setX(currentPlatform.x() + currentPlatformDx);
             }
         }
         speedX.update(moveLeft, moveRight);
 
+        addSpeedXtoX();
+        updateXCollision(level);
+    }
+
+    protected void addSpeedXtoX() {
         x += speedX.value();
-        handleLeftCollision(level);
-        handleRightCollision(level);
+    }
+
+    protected void addSpeedYtoY() {
+        y += fromFloat(speedY);
+    }
+
+    protected boolean updateXCollision(Level level) {
+        boolean collision = handleLeftCollision(level);
+        collision |= handleRightCollision(level);
 
         setCurrentPlatform(platformBelowMe(level));
         if (currentPlatform != null) {
-            currentPlatformDx = x - currentPlatform.x();
+            currentPlatformDx = x() - currentPlatform.x();
         }
+        return collision;
     }
 
     public boolean handleJump(Level level, boolean jump) {
@@ -96,9 +157,9 @@ public abstract class Entity extends Rectangle implements Updatable, Drawable, H
                 clearCurrentPlatform();
             } else {
                 if (facingDown) {
-                    y = currentPlatform.y() - height;
+                    setY(currentPlatform.y() - height);
                 } else {
-                    y = currentPlatform.y() + currentPlatform.height();
+                    setY(currentPlatform.y() + currentPlatform.height());
                 }
             }
         }
@@ -148,40 +209,40 @@ public abstract class Entity extends Rectangle implements Updatable, Drawable, H
     private Platform platformBelowMe(Level level) {
         int sign = facingDown ? 1 : -1;
 
-        y += sign;
+        y += sign * SCALE;
         for (Platform platform : level.platforms().list()) {
-            if (signum(platform.y() - y) == sign && intersects(platform)) {
-                y -= sign;
+            if (signum(platform.y() - y()) == sign && intersects(platform)) {
+                y -= sign * SCALE;
                 return platform;
             }
         }
-        y -= sign;
+        y -= sign * SCALE;
 
         return null;
     }
 
     protected boolean handleCeilCollision(Level level) {
-        boolean tilesCollision = horizontalTilesCollision(toTile(y), level);
+        boolean tilesCollision = horizontalTilesCollision(toTile(y()), level);
         if (tilesCollision && facingDown) {
-            x--;
-            tilesCollision = horizontalTilesCollision(toTile(y), level);
+            x -= SCALE;
+            tilesCollision = horizontalTilesCollision(toTile(y()), level);
             if (tilesCollision) {
-                x += 2;
-                tilesCollision = horizontalTilesCollision(toTile(y), level);
+                x += 2 * SCALE;
+                tilesCollision = horizontalTilesCollision(toTile(y()), level);
                 if (tilesCollision) {
-                    x--;
+                    x -= SCALE;
                 }
             }
         }
         if (tilesCollision) {
-            y = (toTile(y) + 1) * TILE;
+            setY((toTile(y()) + 1) * TILE);
         }
         for (Platform platform : level.platforms().list()) {
             if (platform.centerY() < centerY() && intersects(platform)) {
-                y = platform.y() + platform.height();
+                setY(platform.y() + platform.height());
                 if (!facingDown) {
                     setCurrentPlatform(platform);
-                    currentPlatformDx = x - platform.x();
+                    currentPlatformDx = x() - platform.x();
                 }
                 return true;
             }
@@ -190,28 +251,28 @@ public abstract class Entity extends Rectangle implements Updatable, Drawable, H
     }
 
     protected boolean handleFloorCollision(Level level) {
-        boolean tilesCollision = horizontalTilesCollision(toTile(y + height - 1), level);
+        boolean tilesCollision = horizontalTilesCollision(toTile(y() + height - 1), level);
         if (tilesCollision && !facingDown) {
-            x--;
-            tilesCollision = horizontalTilesCollision(toTile(y + height - 1), level);
+            x -= SCALE;
+            tilesCollision = horizontalTilesCollision(toTile(y() + height - 1), level);
             if (tilesCollision) {
-                x += 2;
-                tilesCollision = horizontalTilesCollision(toTile(y + height - 1), level);
+                x += 2 * SCALE;
+                tilesCollision = horizontalTilesCollision(toTile(y() + height - 1), level);
                 if (tilesCollision) {
-                    x--;
+                    x -= SCALE;
                 }
             }
         }
         if (tilesCollision) {
-            y = toTile(y + height - 1) * TILE - height;
+            setY(toTile(y() + height - 1) * TILE - height);
             // bouncing could be added here
         }
         for (Platform platform : level.platforms().list()) {
             if (platform.centerY() > centerY() && intersects(platform)) {
-                y = platform.y() - height;
+                setY(platform.y() - height);
                 if (facingDown) {
                     setCurrentPlatform(platform);
-                    currentPlatformDx = x - platform.x();
+                    currentPlatformDx = x() - platform.x();
                 }
                 return true;
             }
@@ -219,45 +280,49 @@ public abstract class Entity extends Rectangle implements Updatable, Drawable, H
         return tilesCollision;
     }
 
-    protected void handleLeftCollision(Level level) {
-        boolean tilesCollision = verticalCollision(toTile(x), level);
+    protected boolean handleLeftCollision(Level level) {
+        boolean tilesCollision = verticalCollision(toTile(x()), level);
         if (tilesCollision) {
-            x = (toTile(x) + 1) * TILE;
+            setX((toTile(x()) + 1) * TILE);
             speedX.stop();
         }
         for (Platform platform : level.platforms().list()) {
             if (platform.centerX() < centerX() && intersects(platform)) {
-                x = platform.x() + platform.width();
+                setX(platform.x() + platform.width());
                 speedX.stop();
+                return true;
             }
         }
+        return tilesCollision;
     }
 
-    protected void handleRightCollision(Level level) {
-        boolean tilesCollision = verticalCollision(toTile(x + width - 1), level);
+    protected boolean handleRightCollision(Level level) {
+        boolean tilesCollision = verticalCollision(toTile(x() + width - 1), level);
         if (tilesCollision) {
-            x = toTile(x + width - 1) * TILE - width;
+            setX(toTile(x() + width - 1) * TILE - width);
             speedX.stop();
         }
         for (Platform platform : level.platforms().list()) {
             if (platform.centerX() > centerX() && intersects(platform)) {
-                x = platform.x() - width;
+                setX(platform.x() - width);
                 speedX.stop();
+                return true;
             }
         }
+        return tilesCollision;
     }
 
     protected boolean isOnSurface(Level level) {
         if (platformBelowMe(level) != null) return true;
         if (facingDown) {
-            return horizontalTilesCollision(toTile(y + height), level);
+            return horizontalTilesCollision(toTile(y() + height), level);
         } else {
-            return horizontalTilesCollision(toTile(y - 1), level);
+            return horizontalTilesCollision(toTile(y() - 1), level);
         }
     }
 
     protected boolean horizontalTilesCollision(int i, Level level) {
-        for (int j = toTile(x), jRight = toTile(x + width - 1); j <= jRight; j++) {
+        for (int j = toTile(x()), jRight = toTile(x() + width - 1); j <= jRight; j++) {
             if (level.isSolid(i, j)) {
                 return true;
             }
@@ -270,7 +335,7 @@ public abstract class Entity extends Rectangle implements Updatable, Drawable, H
     }
 
     protected boolean verticalCollision(int j, BiIntPredicate condition) {
-        for (int i = toTile(y), iFloor = toTile(y + height - 1); i <= iFloor; i++) {
+        for (int i = toTile(y()), iFloor = toTile(y() + height - 1); i <= iFloor; i++) {
             if (condition.test(i, j)) {
                 return true;
             }

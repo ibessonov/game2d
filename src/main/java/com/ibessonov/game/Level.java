@@ -4,47 +4,85 @@ import com.ibessonov.game.physics.Gravity;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Arrays;
 
 import static com.ibessonov.game.Constants.TILE;
 import static com.ibessonov.game.resources.Resources.loadImage;
+import static java.util.Collections.singletonList;
 
 /**
  * @author ibessonov
  */
 public class Level {
 
-    private final int height = 50;
-    private final int width = 80;
-    private final int[][] map = new int[height][width];
+    private final int[][] level1 = {
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+    };
+    private final int[][] level2 = {
+            {1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+    };
+    private final int[][] level3 = {
+            {1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1},
+            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1},
+            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1},
+            {1, 0, 0, 0, 0, 3, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 3, 1, 1},
+            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 1},
+            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 0},
+            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 0},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1}
+    };
+
+    private final int height;
+    private final int width;
+    private final int[][] map;
+    private final int number;
 
     private GoodList<Platform> platforms = new GoodList<>();
 
-    private final Gravity gravity = new Gravity(1, 8 * 3, 3, true);
+    private final Gravity gravity = new Gravity(0.375f, 7f, true);
 
-    public Level() {
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                if (j * (j + 1 - width) == 0) {
-                    map[i][j] = 2;
-                }
-                if (i * (i + 1 - height) == 0) {
-                    map[i][j] = 1;
-                }
-                if (ThreadLocalRandom.current().nextInt(12) == 0) {
-                    map[i][j] = 1;
-                }
-            }
-        }
-        map[height - 3][1] = 1;
-        map[height - 3][3] =
-        map[height - 4][3] =
-        map[height - 5][3] =
-        map[height - 6][3] = 3;
-        map[height - 7][3] = 1;
-
-        Platform p = new CircularPlatform(3 * TILE, TILE);
-        platforms.add(p);
+    public Level(int number) {
+        this.number = number;
+        map    = number == 1 ? level1
+               : number == 2 ? level2
+               :               level3;
+        height = map.length;
+        width  = map[0].length;
+//        Platform p = new CircularPlatform(3 * TILE, TILE);
+//        platforms.add(p);
     }
 
     public int height() {
@@ -64,11 +102,15 @@ public class Level {
     }
 
     public boolean isSolid(int i, int j) {
-        return isOutOfBounds(i, j) || map[i][j] == 1;
+        return !isOutOfBounds(i, j) && map[i][j] == 1;
     }
 
     public boolean isLadder(int i, int j) {
         return !isOutOfBounds(i, j) && map[i][j] == 3;
+    }
+
+    public void inc(int i, int j) {
+        map[i][j] = (map[i][j] + 1) % 4;
     }
 
     public boolean isOutOfBounds(int i, int j) {
@@ -88,10 +130,30 @@ public class Level {
     }
 
     public boolean backTile(int i, int j) {
-        return map[i][j] != 2;
+        return map[i][j] > 2;
     }
 
     public boolean frontTile(int i, int j) {
-        return map[i][j] == 2;
+        return map[i][j] <= 2; // ? distinguish solid tile from back tile
+    }
+
+    public java.util.List<Trigger> triggers() {
+        switch (number) {
+            case 1:
+                return Arrays.asList(
+                        new Trigger(20 *  TILE + 7, (11 - 5) * TILE, 1, 2 * TILE,
+                            2, 7, (21 - 5) * TILE, true),
+                        new Trigger((20 - 3) * TILE, -14, TILE, 1,
+                            3, (20 - 3) * TILE, 11 * TILE - 14, false)
+                );
+            case 2:
+                return singletonList(new Trigger(-7 - 1, (21 - 5) * TILE, 1, 2 * TILE,
+                            1, 20 * TILE - 7 - 1, (11 - 5) * TILE, true));
+            case 3:
+                return singletonList(new Trigger((20 - 3) * TILE, 11 * TILE + 14, TILE, 1,
+                            1, (20 - 3) * TILE,  14, false));
+            default:
+                throw new UnsupportedOperationException();
+        }
     }
 }

@@ -2,6 +2,9 @@ package com.ibessonov.game;
 
 import java.awt.*;
 
+import static com.ibessonov.game.physics.Gravity.fromInt;
+import static java.lang.Math.abs;
+
 /**
  * @author ibessonov
  */
@@ -10,10 +13,16 @@ public class SimpleBullet extends Entity implements Bullet {
 
     private boolean disposed = false;
 
-    public SimpleBullet(int x, int y, boolean facingRight) {
-        super(5, 3, 0, 6, 6);
-        setPosition(x, y);
-        speedX.update(!facingRight, facingRight);
+    public SimpleBullet(int speedX, int speedY) {
+        super(size(speedX, speedY), size(speedY, speedX), 0, abs(speedX), abs(speedX), 0.25f);
+        this.speedX.update(speedX < 0, speedX > 0);
+        this.speedY = speedY;
+    }
+
+    private static int size(int speedX, int speedY) {
+        if (speedX == 0) return 3;
+        if (speedY == 0) return 5;
+        return 4;
     }
 
     @Override
@@ -24,20 +33,24 @@ public class SimpleBullet extends Entity implements Bullet {
     @Override
     public void draw(Graphics g, int xOffset, int yOffset) {
         g.setColor(Color.WHITE);
-        g.fillRect(x - xOffset, y - yOffset, width, height);
+        g.fillRect(x() - xOffset, y() - yOffset, width, height);
 
         g.setColor(Color.RED);
-        g.drawRect(x - xOffset, y - yOffset, width - 1, height - 1);
+        g.drawRect(x() - xOffset, y() - yOffset, width - 1, height - 1);
     }
 
     @Override
     public void updateY(Level level) {
+        setY(y() + Math.round(this.speedY));
+        if (updateYCollision(level) && !disposed) {
+            dispose();
+        }
     }
 
     @Override
     public void updateX(Level level) {
-        updateRunSpeed(level, speedX.value() < 0, speedX.value() > 0);
-        if (speedX.value() == 0 && !disposed) {
+        setX(x() + Math.round(fromInt(speedX.value())));
+        if (updateXCollision(level) && !disposed) {
             dispose();
         }
     }
@@ -45,8 +58,7 @@ public class SimpleBullet extends Entity implements Bullet {
     @Override
     public void dispose() {
         disposed = true;
-        x = Integer.MIN_VALUE;
-        y = Integer.MIN_VALUE;
+        setPosition(Integer.MIN_VALUE, Integer.MIN_VALUE);
     }
 
     @Override
