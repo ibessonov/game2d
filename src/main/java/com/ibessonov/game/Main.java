@@ -1,7 +1,5 @@
 package com.ibessonov.game;
 
-import static com.ibessonov.game.Context.injector;
-
 public class Main {
 
     public static void main(String args[]) {
@@ -11,6 +9,6 @@ public class Main {
 //        }
 //        System.out.println(glfwGetJoystickButtons(GLFW_JOYSTICK_1));
 
-        injector().getInstance(Game.class).start();
+        new Game().start();
     }
 }

@@ -34,4 +34,9 @@ public class Trigger extends Rectangle {
     public boolean horizontal() {
         return horizontal;
     }
+
+    //TODO support triggers for seamless transitions
+    public boolean vertical() {
+        return !horizontal;
+    }
 }

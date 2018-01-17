@@ -2,21 +2,19 @@ package com.ibessonov.game;
 
 import java.awt.*;
 
-import static com.ibessonov.game.physics.Gravity.fromInt;
 import static java.lang.Math.abs;
 
 /**
  * @author ibessonov
  */
-//TODO stops on platforms =)
 public class SimpleBullet extends Entity implements Bullet {
 
     private boolean disposed = false;
 
     public SimpleBullet(int speedX, int speedY) {
         super(size(speedX, speedY), size(speedY, speedX), 0, abs(speedX), abs(speedX), 0.25f);
-        this.speedX.update(speedX < 0, speedX > 0);
-        this.speedY = speedY;
+        this.speedInfo.update(this.speedX, speedX < 0, speedX > 0);
+        this.speedY.set(speedY);
     }
 
     private static int size(int speedX, int speedY) {
@@ -41,7 +39,7 @@ public class SimpleBullet extends Entity implements Bullet {
 
     @Override
     public void updateY(Level level) {
-        setY(y() + Math.round(this.speedY));
+        y.add(speedY);
         if (updateYCollision(level) && !disposed) {
             dispose();
         }
@@ -49,7 +47,7 @@ public class SimpleBullet extends Entity implements Bullet {
 
     @Override
     public void updateX(Level level) {
-        setX(x() + Math.round(fromInt(speedX.value())));
+        x.add(speedX);
         if (updateXCollision(level) && !disposed) {
             dispose();
         }
@@ -58,7 +56,6 @@ public class SimpleBullet extends Entity implements Bullet {
     @Override
     public void dispose() {
         disposed = true;
-        setPosition(Integer.MIN_VALUE, Integer.MIN_VALUE);
     }
 
     @Override

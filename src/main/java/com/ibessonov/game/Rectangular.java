@@ -19,12 +19,9 @@ public interface Rectangular extends Centered {
     }
 
     default boolean intersects(Rectangular other) {
-        if (other.x() >= x() + width()) return false;
-        if (other.x() + other.width() <= x()) return false;
-
-        if (other.y() >= y() + height()) return false;
-        if (other.y() + other.height() <= y()) return false;
-
-        return true;
+        return other.x() < x() + width()
+            && other.y() < y() + height()
+            && other.x() + other.width() > x()
+            && other.y() + other.height() > y();
     }
 }

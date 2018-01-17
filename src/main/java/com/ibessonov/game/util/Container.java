@@ -34,9 +34,9 @@ public interface Container<T> extends Iterable<T> {
         }
     }
 
-    class JoinedContainer<T> implements Container<T> {
+    final class JoinedContainer<T> implements Container<T> {
 
-        private Container<? extends T>[] containers;
+        private final Container<? extends T>[] containers;
 
         JoinedContainer(Container<? extends T>[] containers) {
             this.containers = containers;

@@ -1,10 +1,12 @@
 package com.ibessonov.game;
 
-import com.ibessonov.game.physics.Gravity;
+import com.ibessonov.game.core.physics.Gravity;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.ibessonov.game.Constants.TILE;
 import static com.ibessonov.game.resources.Resources.loadImage;
@@ -23,7 +25,7 @@ public class Level {
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
@@ -70,7 +72,7 @@ public class Level {
     private final int[][] map;
     private final int number;
 
-    private GoodList<Platform> platforms = new GoodList<>();
+    private List<Platform> platforms = new ArrayList<>();
 
     private final Gravity gravity = new Gravity(0.375f, 7f, true);
 
@@ -81,8 +83,11 @@ public class Level {
                :               level3;
         height = map.length;
         width  = map[0].length;
-//        Platform p = new CircularPlatform(3 * TILE, TILE);
-//        platforms.add(p);
+
+        if (number == 1) {
+            platforms.add(new HorizontalPlatform(5 * TILE, 7 * TILE, 2 * TILE, TILE / 2,
+                    0, 1, 11 * TILE, true));
+        }
     }
 
     public int height() {
@@ -93,7 +98,7 @@ public class Level {
         return width;
     }
 
-    public GoodList<Platform> platforms() {
+    public List<Platform> platforms() {
         return platforms;
     }
 
@@ -137,7 +142,7 @@ public class Level {
         return map[i][j] <= 2; // ? distinguish solid tile from back tile
     }
 
-    public java.util.List<Trigger> triggers() {
+    public List<Trigger> triggers() {
         switch (number) {
             case 1:
                 return Arrays.asList(

@@ -1,6 +1,5 @@
 package com.ibessonov.game.player;
 
-import com.google.inject.Inject;
 import com.ibessonov.game.*;
 
 import java.awt.*;
@@ -13,20 +12,20 @@ import static com.ibessonov.game.Conversion.toTile;
 /**
  * @author ibessonov
  */
-class DefaultPlayer extends Entity implements Player {
+public class DefaultPlayer extends Entity implements Player {
 
-    @Inject
     private Keyboard keyboard;
 
-    @Inject
     private FrameHolder frameHolder;
 
     private int inJump;
 
     protected boolean isOnLadder = false;
 
-    public DefaultPlayer() {
-        super(TILE - 2, 2 * TILE - 4, 3.625f, 1f, 1.75f, 0.25f);
+    public DefaultPlayer(Keyboard keyboard, FrameHolder frameHolder) {
+        super(TILE - 2, 2 * TILE - 4, 3.625f, 1f, 1.875f, 0.25f);
+        this.keyboard = keyboard;
+        this.frameHolder = frameHolder;
     }
 
     private int animationSprite;
@@ -42,11 +41,11 @@ class DefaultPlayer extends Entity implements Player {
         if (isOnLadder) {
             super.updateY(level);
             if (keyboard.isUpPressed()) {
-                setY(y() - 1);
+                y.add(-1);
             } else if (keyboard.isDownPressed()) {
-                setY(y() + 1);
+                y.add(1);
             }
-            speedY = 0;
+            speedY.set(0);
             super.updateYCollision(level);
             boolean jumpTapped = keyboard.isJumpTapped();
             if (jumpTapped || !isStillOnLadder(level)) {
@@ -63,7 +62,7 @@ class DefaultPlayer extends Entity implements Player {
             }
             if (keyboard.isJumpPressed()) {
                 if (inJump > 0 && inJump <= 12) {
-                    speedY = level.gravity().directedSpeed(-jumpSpeed);
+                    speedY.set(level.gravity().directedSpeed(-jumpSpeed.floatValue()));
                 }
             }
             handleJump(level, keyboard.isJumpTapped());
@@ -72,7 +71,7 @@ class DefaultPlayer extends Entity implements Player {
                 inJump++;
             }
             if (super.updateGravityAndCollisions(level)) {
-                inJump = (speedY == 0) ? 0 : 1000;
+                inJump = (speedY.floatValue() == 0f) ? 0 : 1000;
             }
         }
     }
@@ -128,11 +127,12 @@ class DefaultPlayer extends Entity implements Player {
         if (isOverLadder(level) && (keyboard.isUpPressed() || keyboard.isDownPressed())) {
             isOnLadder = true;
             inJump = 0;
-            speedX.stop();
-            setPosition(toScreen(toTile(centerX())) + (TILE - width()) / 2, y());
+            speedX.set(0);
+            x.set(toScreen(toTile(centerX())) + (TILE - width()) / 2);
+            y.round();
         }
-        if (speedX.value() == 0) {
-            setX(x());
+        if (speedX.floatValue() == 0f) {
+            x.round();
         }
     }
 

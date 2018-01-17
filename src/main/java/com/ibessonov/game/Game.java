@@ -1,8 +1,7 @@
 package com.ibessonov.game;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import com.ibessonov.game.enemies.BasicEnemy;
+import com.ibessonov.game.player.DefaultPlayer;
 import com.ibessonov.game.player.InvinciblePlayer;
 import com.ibessonov.game.player.ProxyPlayer;
 import com.ibessonov.game.util.BiIntPredicate;
@@ -11,16 +10,18 @@ import com.ibessonov.game.util.Container;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.ibessonov.game.Constants.*;
 import static com.ibessonov.game.Conversion.toScreen;
 import static com.ibessonov.game.Conversion.toTile;
 import static com.ibessonov.game.Effects.*;
-import static com.ibessonov.game.player.Player.defaultPlayer;
 import static com.ibessonov.game.resources.Resources.loadImage;
 import static com.ibessonov.game.util.Container.*;
 import static java.lang.Math.max;
@@ -29,26 +30,20 @@ import static java.lang.Math.min;
 /**
  * @author ibessonov
  */
-@Singleton
 public class Game {
 
-    @Inject
-    private MainCanvas canvas;
-    @Inject
-    private FrameHolder frame;
+    private final MainCanvas canvas;
+    private final FrameHolder frame = new FrameHolder();
+    private final Keyboard keyboard;
 
-    @Inject
-    private Keyboard keyboard;
-    //    @Inject
     private Level level;
 
-    private final ProxyPlayer player = new ProxyPlayer(defaultPlayer());
+    private final ProxyPlayer player;
 
     private Collection<BasicEnemy> enemies = new ArrayList<>();
     private Collection<Item> items = new ArrayList<>();
 
-    @Inject
-    private GoodList<Bullet> bullets;
+    private List<Bullet> bullets = new ArrayList<>();
 
     private Container<Updatable> updatables;
     private Container<Disposable> disposables;
@@ -60,8 +55,16 @@ public class Game {
 
     private final BufferedImage background = loadImage("back.png");
 
-    @Inject
-    private void init() {
+    public Game() {
+        canvas = new MainCanvas();
+        keyboard = new Keyboard(canvas);
+        canvas.getJFrame().addWindowListener(new WindowAdapter() {
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                stop();
+            }
+        });
         canvas.addMouseListener(new MouseAdapter() {
 
             @Override
@@ -71,12 +74,12 @@ public class Game {
                 if (level.isOutOfBounds(i, j)) return;
 
                 System.out.printf("Clicked on (%d, %d)\n", i, j);
-                level.inc(i, j);
+//                level.inc(i, j);
             }
         });
+        player = new ProxyPlayer(new DefaultPlayer(keyboard, frame));
 
         loadLevelData(new Level(1));
-
         player.setPosition(2 * TILE, (level.height() - 8) * TILE);
     }
 
@@ -97,10 +100,10 @@ public class Game {
             items.add(new Item(rnd.nextInt(level.height()), rnd.nextInt(level.width())));
         }
 
-        updatables = join(list(level.platforms().list()), singleton(player), list(enemies), list(bullets.list()));
-        disposables = join(list(items), list(enemies), list(bullets.list()));
+        updatables = join(list(level.platforms()), singleton(player), list(enemies), list(bullets));
+        disposables = join(list(items), list(enemies), list(bullets));
         drawables = join(singleton(tiles(level, level::backTile)),
-                list(level.platforms().list()), list(bullets.list()),
+                list(level.platforms()), list(bullets),
                 list(items), singleton(tiles(level, level::frontTile)), list(enemies), singleton(player)
         );
     }
@@ -131,10 +134,9 @@ public class Game {
             }
         }
 
-        bullets.sort();
         for (BasicEnemy enemy : enemies) {
-            for (Bullet bullet : bullets.findNearest(enemy.x() - 5, enemy.x() + enemy.width + 5)) {
-                if (bullet.intersects(enemy)) {
+            for (Bullet bullet : bullets) {
+                if (!bullet.disposed() && bullet.intersects(enemy)) {
                     enemy.decreaseLifeLevel(bullet.damage());
                     bullet.dispose();
                 }

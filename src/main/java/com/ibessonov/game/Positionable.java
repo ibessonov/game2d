@@ -1,7 +1,7 @@
 package com.ibessonov.game;
 
 /**
- * Created by ibessonov on 13.05.2017.
+ * @author ibessonov
  */
 public interface Positionable {
     void setPosition(int x, int y);

@@ -4,8 +4,6 @@ import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
@@ -16,10 +14,9 @@ import static java.awt.event.KeyEvent.*;
 /**
  * @author ibessonov
  */
-@Singleton
-public class Keyboard extends KeyAdapter {
+public class Keyboard {
 
-    private final boolean windows = System.getProperty("os.name", "").toLowerCase().contains("windows");
+    private static final boolean windows = System.getProperty("os.name", "").toLowerCase().contains("windows");
 
     private static final int MASK_LEFT = 0x01;
     private static final int MASK_RIGHT = 0x02;
@@ -36,9 +33,8 @@ public class Keyboard extends KeyAdapter {
     private final Set<Integer> pressedKeys = new HashSet<>();
     private final Set<Integer> tappedKeys = new HashSet<>();
 
-    @Inject
-    public void init(MainCanvas canvas) {
-        canvas.addKeyListener(this);
+    public Keyboard(MainCanvas canvas) {
+        canvas.addKeyListener(new KeyboardAdapter());
 
         if (windows) {
             Controller[] ca = ControllerEnvironment.getDefaultEnvironment().getControllers();
@@ -90,17 +86,6 @@ public class Keyboard extends KeyAdapter {
                 }
             }
         }
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        if (pressedKeys.add(e.getKeyCode()))
-            tappedKeys.add(e.getKeyCode());
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-        pressedKeys.remove(e.getKeyCode());
     }
 
     public boolean isLeftPressed() {
@@ -161,5 +146,19 @@ public class Keyboard extends KeyAdapter {
 
     private boolean isJoyTapped(int m) {
         return (mask & m) != 0 && (oldm & m) == 0;
+    }
+
+    private class KeyboardAdapter extends KeyAdapter {
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            if (pressedKeys.add(e.getKeyCode()))
+                tappedKeys.add(e.getKeyCode());
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+            pressedKeys.remove(e.getKeyCode());
+        }
     }
 }

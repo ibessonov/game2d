@@ -1,11 +1,12 @@
 package com.ibessonov.game;
 
-import com.ibessonov.game.physics.SpeedX;
+import com.ibessonov.game.core.geometry.SubPixel;
+import com.ibessonov.game.core.physics.SpeedInfo;
 import com.ibessonov.game.util.BiIntPredicate;
 
 import static com.ibessonov.game.Constants.TILE;
 import static com.ibessonov.game.Conversion.toTile;
-import static com.ibessonov.game.physics.Gravity.*;
+import static com.ibessonov.game.core.geometry.SubPixel.subPixel;
 import static java.lang.Integer.signum;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -15,19 +16,20 @@ import static java.lang.Math.min;
  */
 public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Rectangular, Positionable {
 
-    private int x;
-    private int y;
+    protected final SubPixel x = subPixel(0);
+    protected final SubPixel y = subPixel(0);
 
     protected final int width;
     protected final int height;
 
-    protected SpeedX speedX;
+    protected final SubPixel speedX = subPixel(0);
+    protected final SpeedInfo speedInfo;
 
-    protected float speedY;
-    protected float jumpSpeed;
+    protected final SubPixel speedY = subPixel(0);
+    protected final SubPixel jumpSpeed;
 
     private Platform currentPlatform;
-    private int currentPlatformDx;
+    private final SubPixel currentPlatformDx = subPixel(0);
 
     protected boolean facingRight = true;
     protected boolean facingDown = true;
@@ -38,33 +40,24 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
         this.width = width;
         this.height = height;
 
-        this.speedX = new SpeedX(fromFloat(initialSpeed), fromFloat(acceleration), fromFloat(maxSpeed));
-        this.jumpSpeed = jumpSpeed;
+        this.speedInfo = new SpeedInfo(initialSpeed, acceleration, maxSpeed);
+        this.jumpSpeed = subPixel(jumpSpeed);
     }
 
     @Override
     public void setPosition(int x, int y) {
-        setX(x);
-        setY(y);
+        this.x.set(x);
+        this.y.set(y);
     }
-
-    protected void setY(int y) {
-        this.y = fromFloat(y);
-    }
-
-    protected void setX(int x) {
-        this.x = fromFloat(x);
-    }
-
 
     @Override
     public int x() {
-        return Math.round(fromInt(x));
+        return x.intValue();
     }
 
     @Override
     public int y() {
-        return Math.round(fromInt(y));
+        return y.intValue();
     }
 
     @Override
@@ -96,17 +89,21 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     }
 
     protected void updateGravity(Level level) {
-        speedY = level.gravity().accelerate(speedY);
-        addSpeedYtoY();
+        level.gravity().accelerate(speedY);
+        y.add(speedY);
     }
 
     protected boolean updateYCollision(Level level) {
         if (handleCeilCollision(level)) {
-            speedY = max(speedY, 0);
+            if (speedY.floatValue() < 0f) {
+                speedY.set(0);
+            }
             return true;
         }
         if (handleFloorCollision(level)) {
-            speedY = min(speedY, 0);
+            if (speedY.floatValue() > 0f) {
+                speedY.set(0);
+            }
             return true;
         }
         return false;
@@ -123,21 +120,14 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
             if (currentPlatform.disposed()) {
                 clearCurrentPlatform();
             } else {
-                setX(currentPlatform.x() + currentPlatformDx);
+                x.set(currentPlatform.x());
+                x.add(currentPlatformDx);
             }
         }
-        speedX.update(moveLeft, moveRight);
+        speedInfo.update(speedX, moveLeft, moveRight);
+        x.add(speedX);
 
-        addSpeedXtoX();
         updateXCollision(level);
-    }
-
-    protected void addSpeedXtoX() {
-        x += speedX.value();
-    }
-
-    protected void addSpeedYtoY() {
-        y += fromFloat(speedY);
     }
 
     protected boolean updateXCollision(Level level) {
@@ -146,7 +136,8 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
 
         setCurrentPlatform(platformBelowMe(level));
         if (currentPlatform != null) {
-            currentPlatformDx = x() - currentPlatform.x();
+            currentPlatformDx.set(x);
+            currentPlatformDx.add(-currentPlatform.x());
         }
         return collision;
     }
@@ -157,14 +148,14 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
                 clearCurrentPlatform();
             } else {
                 if (facingDown) {
-                    setY(currentPlatform.y() - height);
+                    y.set(currentPlatform.y() - height);
                 } else {
-                    setY(currentPlatform.y() + currentPlatform.height());
+                    y.set(currentPlatform.y() + currentPlatform.height());
                 }
             }
         }
         if (jump && isOnSurface(level)) {
-            speedY = level.gravity().directedSpeed(-jumpSpeed);
+            speedY.set(level.gravity().directedSpeed(-jumpSpeed.floatValue()));
             clearCurrentPlatform();
             return true;
         }
@@ -209,14 +200,15 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     private Platform platformBelowMe(Level level) {
         int sign = facingDown ? 1 : -1;
 
-        y += sign * SCALE;
-        for (Platform platform : level.platforms().list()) {
+        y.add(sign);
+        for (Platform platform : level.platforms()) {
             if (signum(platform.y() - y()) == sign && intersects(platform)) {
-                y -= sign * SCALE;
+                y.add(-sign);
+                y.round();
                 return platform;
             }
         }
-        y -= sign * SCALE;
+        y.add(-sign);
 
         return null;
     }
@@ -224,25 +216,30 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     protected boolean handleCeilCollision(Level level) {
         boolean tilesCollision = horizontalTilesCollision(toTile(y()), level);
         if (tilesCollision && facingDown) {
-            x -= SCALE;
+            x.add(-1);
             tilesCollision = horizontalTilesCollision(toTile(y()), level);
             if (tilesCollision) {
-                x += 2 * SCALE;
+                x.add(2);
                 tilesCollision = horizontalTilesCollision(toTile(y()), level);
                 if (tilesCollision) {
-                    x -= SCALE;
+                    x.add(-1);
+                } else {
+                    x.round();
                 }
+            } else {
+                x.round();
             }
         }
         if (tilesCollision) {
-            setY((toTile(y()) + 1) * TILE);
+            y.set((toTile(y()) + 1) * TILE);
         }
-        for (Platform platform : level.platforms().list()) {
+        for (Platform platform : level.platforms()) {
             if (platform.centerY() < centerY() && intersects(platform)) {
-                setY(platform.y() + platform.height());
+                y.set(platform.y() + platform.height());
                 if (!facingDown) {
                     setCurrentPlatform(platform);
-                    currentPlatformDx = x() - platform.x();
+                    currentPlatformDx.set(x);
+                    currentPlatformDx.add(-platform.x());
                 }
                 return true;
             }
@@ -253,26 +250,30 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     protected boolean handleFloorCollision(Level level) {
         boolean tilesCollision = horizontalTilesCollision(toTile(y() + height - 1), level);
         if (tilesCollision && !facingDown) {
-            x -= SCALE;
+            x.add(-1);
             tilesCollision = horizontalTilesCollision(toTile(y() + height - 1), level);
             if (tilesCollision) {
-                x += 2 * SCALE;
+                x.add(2);
                 tilesCollision = horizontalTilesCollision(toTile(y() + height - 1), level);
                 if (tilesCollision) {
-                    x -= SCALE;
+                    x.add(-1);
+                } else {
+                    x.round();
                 }
+            } else {
+                x.round();
             }
         }
         if (tilesCollision) {
-            setY(toTile(y() + height - 1) * TILE - height);
+            y.set(toTile(y() + height - 1) * TILE - height);
             // bouncing could be added here
         }
-        for (Platform platform : level.platforms().list()) {
+        for (Platform platform : level.platforms()) {
             if (platform.centerY() > centerY() && intersects(platform)) {
-                setY(platform.y() - height);
+                y.set(platform.y() - height);
                 if (facingDown) {
-                    setCurrentPlatform(platform);
-                    currentPlatformDx = x() - platform.x();
+                    currentPlatformDx.set(x);
+                    currentPlatformDx.add(-platform.x());
                 }
                 return true;
             }
@@ -283,13 +284,13 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     protected boolean handleLeftCollision(Level level) {
         boolean tilesCollision = verticalCollision(toTile(x()), level);
         if (tilesCollision) {
-            setX((toTile(x()) + 1) * TILE);
-            speedX.stop();
+            x.set((toTile(x()) + 1) * TILE);
+            speedX.set(0);
         }
-        for (Platform platform : level.platforms().list()) {
+        for (Platform platform : level.platforms()) {
             if (platform.centerX() < centerX() && intersects(platform)) {
-                setX(platform.x() + platform.width());
-                speedX.stop();
+                x.set(platform.x() + platform.width());
+                speedX.set(0);
                 return true;
             }
         }
@@ -299,13 +300,13 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     protected boolean handleRightCollision(Level level) {
         boolean tilesCollision = verticalCollision(toTile(x() + width - 1), level);
         if (tilesCollision) {
-            setX(toTile(x() + width - 1) * TILE - width);
-            speedX.stop();
+            x.set(toTile(x() + width - 1) * TILE - width);
+            speedX.set(0);
         }
-        for (Platform platform : level.platforms().list()) {
+        for (Platform platform : level.platforms()) {
             if (platform.centerX() > centerX() && intersects(platform)) {
-                setX(platform.x() - width);
-                speedX.stop();
+                x.set(platform.x() - width);
+                speedX.set(0);
                 return true;
             }
         }

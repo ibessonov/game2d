@@ -5,7 +5,6 @@ import com.ibessonov.game.*;
 import java.awt.*;
 
 import static com.ibessonov.game.Constants.*;
-import static com.ibessonov.game.physics.Gravity.fromFloat;
 
 /**
  * @author ibessonov
@@ -24,11 +23,11 @@ public class BasicEnemy extends Entity implements HasLifeLevel, Hazard {
     @Override
     public void updateY(Level level) {
         super.updateY(level);
-        float temp = speedY;
+        float temp = speedY.floatValue();
         if (updateGravityAndCollisions(level)) {
-            speedY = temp * -0.5f; // bounce
-            if (fromFloat(speedY) == 0) {
-                speedY = 0f;
+            speedY.set(temp * -0.5f); // bounce
+            if (speedY.intValue() == 0) {
+                speedY.set(0);
             }
         }
     }
@@ -36,7 +35,7 @@ public class BasicEnemy extends Entity implements HasLifeLevel, Hazard {
     @Override
     public void updateX(Level level) {
         updateRunSpeed(level, !facingRight, facingRight);
-        if (speedX.value() == 0) {
+        if (speedX.floatValue() == 0f) {
             facingRight ^= true;
         }
     }

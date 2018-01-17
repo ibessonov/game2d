@@ -6,23 +6,22 @@ import java.util.concurrent.BlockingQueue;
 /**
  * @author ibessonov
  */
-public class Timer {
+public final class Timer {
 
-    private static final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(1);
+    private static final BlockingQueue<Runnable> QUEUE = new ArrayBlockingQueue<>(1);
 
     @SuppressWarnings("InfiniteLoopStatement")
-    private static final Thread readerThread = new Thread(() -> {
+    private static final Thread READER = new Thread(() -> {
         try {
             while (true) {
-                Runnable task = queue.take();
-                task.run();
+                QUEUE.take().run();
             }
         } catch (InterruptedException ignored) {
         }
     });
 
     static {
-        readerThread.start();
+        READER.start();
     }
 
     @SuppressWarnings("InfiniteLoopStatement")
@@ -34,9 +33,9 @@ public class Timer {
                     int nextFrame = currentFrame + 1;
                     int timeout = (nextFrame * 1000 / fps) - (currentFrame * 1000 / fps);
                     Thread.sleep(timeout);
-                    queue.offer(callback);
+                    QUEUE.offer(callback);
 
-                    if (nextFrame > fps) nextFrame = 1;
+                    if (nextFrame == fps) nextFrame = 0;
                     currentFrame = nextFrame;
                 }
             } catch (InterruptedException ignored) {
@@ -45,9 +44,9 @@ public class Timer {
     }
 
     public static void stop() {
-        readerThread.interrupt();
+        READER.interrupt();
         try {
-            readerThread.join();
+            READER.join();
         } catch (InterruptedException ignored) {
         }
     }
