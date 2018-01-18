@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.ibessonov.game.Constants.TILE;
+import static com.ibessonov.game.Trigger.TriggerType.HORIZONTAL;
+import static com.ibessonov.game.Trigger.TriggerType.VERTICAL;
 import static com.ibessonov.game.resources.Resources.loadImage;
 import static java.util.Collections.singletonList;
 
@@ -32,6 +34,7 @@ public class Level {
     };
     private final int[][] level2 = {
             {1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -78,9 +81,9 @@ public class Level {
 
     public Level(int number) {
         this.number = number;
-        map    = number == 1 ? level1
-               : number == 2 ? level2
-               :               level3;
+        map    = copy(number == 1 ? level1
+                    : number == 2 ? level2
+                    :               level3);
         height = map.length;
         width  = map[0].length;
 
@@ -88,6 +91,14 @@ public class Level {
             platforms.add(new HorizontalPlatform(5 * TILE, 7 * TILE, 2 * TILE, TILE / 2,
                     0, 1, 11 * TILE, true));
         }
+    }
+
+    private static int[][] copy(int[][] array) {
+        int[][] clone = new int[array.length][];
+        for (int i = 0; i < array.length; i++) {
+            clone[i] = array[i].clone();
+        }
+        return clone;
     }
 
     public int height() {
@@ -134,10 +145,12 @@ public class Level {
         }
     }
 
+    @Deprecated
     public boolean backTile(int i, int j) {
         return map[i][j] > 2;
     }
 
+    @Deprecated
     public boolean frontTile(int i, int j) {
         return map[i][j] <= 2; // ? distinguish solid tile from back tile
     }
@@ -147,18 +160,24 @@ public class Level {
             case 1:
                 return Arrays.asList(
                         new Trigger(20 *  TILE + 7, (11 - 5) * TILE, 1, 2 * TILE,
-                            2, 7, (21 - 5) * TILE, true),
+                            2, 7, (22 - 5) * TILE, HORIZONTAL),
                         new Trigger((20 - 3) * TILE, -14, TILE, 1,
-                            3, (20 - 3) * TILE, 11 * TILE - 14, false)
+                            3, (20 - 3) * TILE, 11 * TILE - 14, VERTICAL)
                 );
             case 2:
-                return singletonList(new Trigger(-7 - 1, (21 - 5) * TILE, 1, 2 * TILE,
-                            1, 20 * TILE - 7 - 1, (11 - 5) * TILE, true));
+                return singletonList(new Trigger(-7 - 1, (22 - 5) * TILE, 1, 2 * TILE,
+                            1, 20 * TILE - 7 - 1, (11 - 5) * TILE, HORIZONTAL));
             case 3:
                 return singletonList(new Trigger((20 - 3) * TILE, 11 * TILE + 14, TILE, 1,
-                            1, (20 - 3) * TILE,  14, false));
+                            1, (20 - 3) * TILE,  14, VERTICAL));
             default:
                 throw new UnsupportedOperationException();
+        }
+    }
+
+    public void bulletHit(int i, int j, Bullet bullet) {
+        if (!isOutOfBounds(i, j)) {
+            map[i][j] = 0;
         }
     }
 }

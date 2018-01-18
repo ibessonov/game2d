@@ -170,17 +170,17 @@ public class DefaultPlayer extends Entity implements Player {
         if (speedY == 0) {
             int bulletX = x() + (facingRight ? width + 9 : -bullet.width() - 9);
             int bulletY = y() + 12 + (facingDown ? 0 : 1);
-            bullet.setPosition(bulletX, bulletY);
+            bullet.setPosition(bulletX - speedX, bulletY - speedY);
         } else if (speedX == 0) {
             int bulletX = centerX() - bullet.width() / 2 + (facingRight ? 0 : -2);
             int bulletY = y() + (speedY > 0 ? height : -bullet.height());
-            bullet.setPosition(bulletX, bulletY);
+            bullet.setPosition(bulletX - speedX, bulletY - speedY);
         } else {
             int bulletX1 = x() + (facingRight ? width + 9 : -bullet.width() - 9);
             int bulletY1 = y() + 12 + (facingDown ? 0 : 1);
             int bulletX2 = centerX() - bullet.width() / 2 + (facingRight ? 0 : -2);
             int bulletY2 = y() + (speedY > 0 ? height : -bullet.height());
-            bullet.setPosition((bulletX1 + bulletX2) / 2, (bulletY1 + bulletY2) / 2);
+            bullet.setPosition((bulletX1 + bulletX2) / 2 - speedX, (bulletY1 + bulletY2) / 2 - speedY);
         }
 
         return bullet;

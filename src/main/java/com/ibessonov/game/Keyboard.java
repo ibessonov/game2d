@@ -4,10 +4,11 @@ import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import static java.awt.event.KeyEvent.*;
 
@@ -18,23 +19,22 @@ public class Keyboard {
 
     private static final boolean windows = System.getProperty("os.name", "").toLowerCase().contains("windows");
 
-    private static final int MASK_LEFT = 0x01;
+    private static final int MASK_LEFT  = 0x01;
     private static final int MASK_RIGHT = 0x02;
-    private static final int MASK_DOWN = 0x04;
-    private static final int MASK_UP = 0x08;
-    private static final int MASK_JUMP = 0x10;
-    private static final int MASK_FIRE = 0x20;
+    private static final int MASK_DOWN  = 0x04;
+    private static final int MASK_UP    = 0x08;
+    private static final int MASK_JUMP  = 0x10;
+    private static final int MASK_FIRE  = 0x20;
     private static final int MASK_START = 0x40;
 
-    private Controller controller = null;
     private int mask;
     private int oldm;
 
-    private final Set<Integer> pressedKeys = new HashSet<>();
-    private final Set<Integer> tappedKeys = new HashSet<>();
+    private final Set<Integer> pressedKeys = new ConcurrentSkipListSet<>();
+    private Controller controller = null;
 
-    public Keyboard(MainCanvas canvas) {
-        canvas.addKeyListener(new KeyboardAdapter());
+    public Keyboard(Canvas canvas) {
+        canvas.addKeyListener(new KeyboardAdapter()); // I don't like this line
 
         if (windows) {
             Controller[] ca = ControllerEnvironment.getDefaultEnvironment().getControllers();
@@ -46,31 +46,31 @@ public class Keyboard {
     }
 
     public void poll() {
+        oldm = mask;
+        mask = 0;
+
+        if (pressedKeys.contains(VK_LEFT)) mask |= MASK_LEFT;
+        if (pressedKeys.contains(VK_RIGHT)) mask |= MASK_RIGHT;
+        if (pressedKeys.contains(VK_DOWN)) mask |= MASK_DOWN;
+        if (pressedKeys.contains(VK_UP)) mask |= MASK_UP;
+        if (pressedKeys.contains(VK_SPACE)) mask |= MASK_JUMP;
+        if (pressedKeys.contains(VK_CONTROL)) mask |= MASK_FIRE;
+        if (pressedKeys.contains(VK_ENTER)) mask |= MASK_START;
+
         if (!windows) return;
 
         controller.poll();
-        oldm = mask;
-
-        mask = 0;
         for (Component component : controller.getComponents()) {
             int data = Math.round(component.getPollData());
             if (data != 0) {
                 switch (component.getIdentifier().getName()) {
                     case "x":
-                        if (data == -1) {
-                            mask |= MASK_LEFT;
-                        }
-                        if (data == 1) {
-                            mask |= MASK_RIGHT;
-                        }
+                        if (data == -1) mask |= MASK_LEFT;
+                        if (data == 1)  mask |= MASK_RIGHT;
                         break;
                     case "y":
-                        if (data == -1) {
-                            mask |= MASK_UP;
-                        }
-                        if (data == 1) {
-                            mask |= MASK_DOWN;
-                        }
+                        if (data == -1) mask |= MASK_UP;
+                        if (data == 1)  mask |= MASK_DOWN;
                         break;
                     case "2":
                         mask |= MASK_JUMP;
@@ -89,62 +89,42 @@ public class Keyboard {
     }
 
     public boolean isLeftPressed() {
-        return !isKeyPressed(VK_RIGHT) && isKeyPressed(VK_LEFT)
-            || !isJoyPressed(MASK_RIGHT) && isJoyPressed(MASK_LEFT);
+        return !pressed(MASK_RIGHT) && pressed(MASK_LEFT);
     }
 
     public boolean isRightPressed() {
-        return !isKeyPressed(VK_LEFT) && isKeyPressed(VK_RIGHT)
-            || !isJoyPressed(MASK_LEFT) && isJoyPressed(MASK_RIGHT);
+        return !pressed(MASK_LEFT) && pressed(MASK_RIGHT);
     }
 
     public boolean isUpPressed() {
-        return !isKeyPressed(VK_DOWN) && isKeyPressed(VK_UP)
-            || !isJoyPressed(MASK_DOWN) && isJoyPressed(MASK_UP);
+        return !pressed(MASK_DOWN) && pressed(MASK_UP);
     }
 
     public boolean isDownPressed() {
-        return !isKeyPressed(VK_UP) && isKeyPressed(VK_DOWN)
-            || !isJoyPressed(MASK_UP) && isJoyPressed(MASK_DOWN);
+        return !pressed(MASK_UP) && pressed(MASK_DOWN);
     }
 
     public boolean isJumpPressed() {
-        return isKeyPressed(VK_SPACE)
-            || isJoyPressed(MASK_JUMP);
+        return pressed(MASK_JUMP);
     }
 
     public boolean isJumpTapped() {
-        return isKeyTapped(VK_SPACE)
-            || isJoyTapped(MASK_JUMP);
+        return tapped(MASK_JUMP);
     }
 
     public boolean isFireTapped() {
-        return isKeyTapped(VK_CONTROL)
-            || isJoyTapped(MASK_FIRE);
+        return tapped(MASK_FIRE);
     }
 
-    public boolean isFlipGravityTapped() {
-        return isKeyTapped(VK_ENTER)
-            || isJoyTapped(MASK_START);
+    public boolean isStartTapped() {
+        return tapped(MASK_START);
     }
 
-    public boolean isNightVisionKeyTapped() {
-        return isKeyTapped(KeyEvent.VK_X);
-    }
-
-    private boolean isKeyTapped(int keyCode) {
-        return tappedKeys.remove(keyCode);
-    }
-
-    private boolean isKeyPressed(int keyCode) {
-        return pressedKeys.contains(keyCode);
-    }
-
-    private boolean isJoyPressed(int m) {
+    private boolean pressed(int m) {
         return (mask & m) != 0;
     }
 
-    private boolean isJoyTapped(int m) {
+    private boolean tapped(int m) {
         return (mask & m) != 0 && (oldm & m) == 0;
     }
 
@@ -152,8 +132,7 @@ public class Keyboard {
 
         @Override
         public void keyPressed(KeyEvent e) {
-            if (pressedKeys.add(e.getKeyCode()))
-                tappedKeys.add(e.getKeyCode());
+            pressedKeys.add(e.getKeyCode());
         }
 
         @Override

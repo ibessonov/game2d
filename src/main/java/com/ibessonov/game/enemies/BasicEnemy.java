@@ -23,9 +23,9 @@ public class BasicEnemy extends Entity implements HasLifeLevel, Hazard {
     @Override
     public void updateY(Level level) {
         super.updateY(level);
-        float temp = speedY.floatValue();
+        float oldSpeedY = speedY.floatValue();
         if (updateGravityAndCollisions(level)) {
-            speedY.set(temp * -0.5f); // bounce
+            speedY.set(oldSpeedY * -0.5f); // bounce
             if (speedY.intValue() == 0) {
                 speedY.set(0);
             }

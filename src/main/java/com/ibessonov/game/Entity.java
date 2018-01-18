@@ -14,6 +14,8 @@ import static java.lang.Math.min;
 /**
  * @author ibessonov
  */
+//TODO rename and split into several classes
+//TODO facing* fields don't feel like they belong here
 public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Rectangular, Positionable {
 
     protected final SubPixel x = subPixel(0);
@@ -202,7 +204,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
 
         y.add(sign);
         for (Platform platform : level.platforms()) {
-            if (signum(platform.y() - y()) == sign && intersects(platform)) {
+            if (signum(platform.centerY() - centerY()) == sign && intersects(platform)) {
                 y.add(-sign);
                 y.round();
                 return platform;
@@ -214,7 +216,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     }
 
     protected boolean handleCeilCollision(Level level) {
-        boolean tilesCollision = horizontalTilesCollision(toTile(y()), level);
+        boolean tilesCollision = speedY.floatValue() < 0 && horizontalTilesCollision(toTile(y()), level);
         if (tilesCollision && facingDown) {
             x.add(-1);
             tilesCollision = horizontalTilesCollision(toTile(y()), level);
@@ -248,7 +250,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     }
 
     protected boolean handleFloorCollision(Level level) {
-        boolean tilesCollision = horizontalTilesCollision(toTile(y() + height - 1), level);
+        boolean tilesCollision = speedY.floatValue() > 0 && horizontalTilesCollision(toTile(y() + height - 1), level);
         if (tilesCollision && !facingDown) {
             x.add(-1);
             tilesCollision = horizontalTilesCollision(toTile(y() + height - 1), level);
@@ -282,7 +284,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     }
 
     protected boolean handleLeftCollision(Level level) {
-        boolean tilesCollision = verticalCollision(toTile(x()), level);
+        boolean tilesCollision = speedX.floatValue() < 0 && verticalCollision(toTile(x()), level);
         if (tilesCollision) {
             x.set((toTile(x()) + 1) * TILE);
             speedX.set(0);
@@ -298,7 +300,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     }
 
     protected boolean handleRightCollision(Level level) {
-        boolean tilesCollision = verticalCollision(toTile(x() + width - 1), level);
+        boolean tilesCollision = speedX.floatValue() > 0 && verticalCollision(toTile(x() + width - 1), level);
         if (tilesCollision) {
             x.set(toTile(x() + width - 1) * TILE - width);
             speedX.set(0);

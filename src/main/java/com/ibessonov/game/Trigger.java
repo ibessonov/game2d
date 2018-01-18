@@ -8,15 +8,15 @@ public class Trigger extends Rectangle {
     private int levelIndex;
     private int toX;
     private int toY;
-    private boolean horizontal;
+    private final TriggerType type;
 
-    public Trigger(int x, int y, int width, int height, int levelIndex, int toX, int toY, boolean horizontal) {
+    public Trigger(int x, int y, int width, int height, int levelIndex, int toX, int toY, TriggerType type) {
         super(width, height);
+        this.type = type;
         setPosition(x, y);
         this.levelIndex = levelIndex;
         this.toX = toX;
         this.toY = toY;
-        this.horizontal = horizontal;
     }
 
     public int levelIndex() {
@@ -31,12 +31,11 @@ public class Trigger extends Rectangle {
         return toY;
     }
 
-    public boolean horizontal() {
-        return horizontal;
+    public TriggerType type() {
+        return type;
     }
 
-    //TODO support triggers for seamless transitions
-    public boolean vertical() {
-        return !horizontal;
+    public enum TriggerType {
+        HORIZONTAL, VERTICAL, SEAMLESS;
     }
 }
