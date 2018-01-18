@@ -41,12 +41,13 @@ public class DefaultPlayer extends Entity implements Player {
         if (isOnLadder) {
             super.updateY(level);
             if (keyboard.isUpPressed()) {
-                y.add(-1);
+                speedY.set(-1);
             } else if (keyboard.isDownPressed()) {
-                y.add(1);
+                speedY.set(1);
             }
-            speedY.set(0);
+            y.add(speedY);
             super.updateYCollision(level);
+            speedY.set(0);
             boolean jumpTapped = keyboard.isJumpTapped();
             if (jumpTapped || !isStillOnLadder(level)) {
                 isOnLadder = false;
@@ -128,6 +129,7 @@ public class DefaultPlayer extends Entity implements Player {
             isOnLadder = true;
             inJump = 0;
             speedX.set(0);
+            speedY.set(0);
             x.set(toScreen(toTile(centerX())) + (TILE - width()) / 2);
             y.round();
         }
