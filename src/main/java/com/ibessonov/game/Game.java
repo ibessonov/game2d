@@ -27,8 +27,7 @@ public class Game {
     private final BufferedImage image = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
     private final Canvas canvas;
 
-    private final FrameHolder frame = new FrameHolder();
-    private final Keyboard keyboard;
+    private final KeyboardImpl keyboard;
 
     private GameState gameState;
 
@@ -61,6 +60,7 @@ public class Game {
 
         canvas.setBackground(Color.BLACK);
 
+        //TODO not conventional, there's another keyboard listener for every purpose
         canvas.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -69,7 +69,7 @@ public class Game {
                 }
             }
         });
-        keyboard = new Keyboard(canvas);
+        keyboard = new KeyboardImpl(canvas);
 
         jFrame.setExtendedState(jFrame.getExtendedState() | JFrame.MAXIMIZED_BOTH);
         jFrame.setUndecorated(true);
@@ -82,11 +82,10 @@ public class Game {
         canvas.createBufferStrategy(3);
         jFrame.setVisible(true);
 
-        gameState = new GameStateImpl(keyboard, frame);
+        gameState = new GameStateImpl();
     }
 
     public void tick() {
-        frame.tick();
         keyboard.poll();
 
         gameState.update(keyboard);
@@ -97,24 +96,16 @@ public class Game {
         do {
             do {
                 Graphics g = bs.getDrawGraphics();
-                g.drawImage(image, getXOffset(), getYOffset(),
-                        SCREEN_WIDTH * getScale(), SCREEN_HEIGHT * getScale(), null);
+
+                int scale = min(canvas.getWidth() / SCREEN_WIDTH, canvas.getHeight() / SCREEN_HEIGHT);
+                int xOffset = (canvas.getWidth() - SCREEN_WIDTH * scale) / 2;
+                int yOffset = (canvas.getHeight() - SCREEN_HEIGHT * scale) / 2;
+                g.drawImage(image, xOffset, yOffset, SCREEN_WIDTH * scale, SCREEN_HEIGHT * scale, null);
+
                 g.dispose();
             } while (bs.contentsRestored());
             bs.show();
         } while (bs.contentsLost());
-    }
-
-    private int getXOffset() {
-        return (canvas.getWidth() - SCREEN_WIDTH * getScale()) / 2;
-    }
-
-    private int getYOffset() {
-        return (canvas.getHeight() - SCREEN_HEIGHT * getScale()) / 2;
-    }
-
-    private int getScale() {
-        return min(canvas.getWidth() / SCREEN_WIDTH, canvas.getHeight() / SCREEN_HEIGHT);
     }
 
     public void start() {

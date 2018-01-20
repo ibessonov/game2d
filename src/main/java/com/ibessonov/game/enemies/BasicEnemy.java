@@ -21,8 +21,8 @@ public class BasicEnemy extends Entity implements HasLifeLevel, Hazard {
     }
 
     @Override
-    public void updateY(Level level) {
-        super.updateY(level);
+    public void updateY(Level level, Keyboard keyboard) {
+        super.updateY(level, keyboard);
         float oldSpeedY = speedY.floatValue();
         if (updateGravityAndCollisions(level)) {
             speedY.set(oldSpeedY * -0.5f); // bounce
@@ -33,8 +33,8 @@ public class BasicEnemy extends Entity implements HasLifeLevel, Hazard {
     }
 
     @Override
-    public void updateX(Level level) {
-        updateRunSpeed(level, !facingRight, facingRight);
+    public void updateX(Level level, Keyboard keyboard) {
+        updateRunSpeed(level, keyboard, !facingRight, facingRight);
         if (speedX.floatValue() == 0f) {
             facingRight ^= true;
         }

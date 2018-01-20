@@ -19,7 +19,7 @@ class HorizontalPlatform extends Rectangle implements Platform {
     }
 
     @Override
-    public void updateX(Level level) {
+    public void updateX(Level level, Keyboard keyboard) {
         if (right) {
             x += speed;
             if (x >= start + total - width) {

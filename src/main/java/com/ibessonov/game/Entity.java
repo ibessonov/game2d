@@ -78,7 +78,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     }
 
     @Override
-    public void updateY(Level level) {
+    public void updateY(Level level, Keyboard keyboard) {
         if (facingDown != level.gravity().isDown()) {
             clearCurrentPlatform();
         }
@@ -115,7 +115,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
         facingRight = moveRight || facingRight && !moveLeft;
     }
 
-    public void updateRunSpeed(Level level, boolean moveLeft, boolean moveRight) {
+    public void updateRunSpeed(Level level, Keyboard keyboard, boolean moveLeft, boolean moveRight) {
         updateHorizontalFacing(moveLeft, moveRight);
 
         if (currentPlatform != null) {

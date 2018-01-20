@@ -12,16 +12,15 @@ public class SimpleBullet extends Entity implements Bullet {
 
     private boolean disposed = false;
 
-    public SimpleBullet(int speedX, int speedY) {
+    public SimpleBullet(float speedX, float speedY) {
         super(size(speedX, speedY), size(speedY, speedX), 0, abs(speedX), abs(speedX), 0f);
         this.speedInfo.update(this.speedX, speedX < 0, speedX > 0);
         this.speedY.set(speedY);
     }
 
-    private static int size(int speedX, int speedY) {
-        if (speedX == 0) return 3;
-        if (speedY == 0) return 5;
-        return 4;
+    @Deprecated
+    private static int size(float speedX, float speedY) {
+        return 3;
     }
 
     @Override
@@ -39,7 +38,7 @@ public class SimpleBullet extends Entity implements Bullet {
     }
 
     @Override
-    public void updateY(Level level) {
+    public void updateY(Level level, Keyboard keyboard) {
         y.add(speedY);
         float oldSpeedY = speedY.floatValue();
         if (!disposed && updateYCollision(level)) {
@@ -62,7 +61,7 @@ public class SimpleBullet extends Entity implements Bullet {
     }
 
     @Override
-    public void updateX(Level level) {
+    public void updateX(Level level, Keyboard keyboard) {
         x.add(speedX);
         float oldSpeedX = speedX.floatValue();
         if (!disposed && updateXCollision(level)) {

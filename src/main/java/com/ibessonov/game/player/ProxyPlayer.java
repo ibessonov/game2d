@@ -1,6 +1,6 @@
 package com.ibessonov.game.player;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 public class ProxyPlayer extends BridgedPlayer {
 
@@ -14,7 +14,7 @@ public class ProxyPlayer extends BridgedPlayer {
         return this;
     }
 
-    public void transform(Function<Player, Player> function) {
+    public void transform(UnaryOperator<Player> function) {
         delegate = function.apply(delegate);
     }
 }

@@ -4,6 +4,8 @@ import com.ibessonov.game.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Collections;
+import java.util.List;
 
 import static com.ibessonov.game.Constants.TILE;
 import static com.ibessonov.game.Conversion.toScreen;
@@ -14,17 +16,14 @@ import static com.ibessonov.game.Conversion.toTile;
  */
 public class DefaultPlayer extends Entity implements Player {
 
-    private Keyboard keyboard;
-
     private FrameHolder frameHolder;
 
     private int inJump;
 
     protected boolean isOnLadder = false;
 
-    public DefaultPlayer(Keyboard keyboard, FrameHolder frameHolder) {
+    public DefaultPlayer(FrameHolder frameHolder) {
         super(TILE - 2, 2 * TILE - 4, 3.625f, 1f, 1.875f, 0.25f);
-        this.keyboard = keyboard;
         this.frameHolder = frameHolder;
     }
 
@@ -37,9 +36,9 @@ public class DefaultPlayer extends Entity implements Player {
     }
 
     @Override
-    public void updateY(Level level) {
+    public void updateY(Level level, Keyboard keyboard) {
         if (isOnLadder) {
-            super.updateY(level);
+            super.updateY(level, keyboard);
             if (keyboard.isUpPressed()) {
                 speedY.set(-1);
             } else if (keyboard.isDownPressed()) {
@@ -57,7 +56,7 @@ public class DefaultPlayer extends Entity implements Player {
             if (level.gravity().isDown() != facingDown) {
                 inJump = 0;
             }
-            super.updateY(level);
+            super.updateY(level, keyboard);
             if (inJump > 0 && !keyboard.isJumpPressed()) {
                 interruptJumping();
             }
@@ -97,12 +96,12 @@ public class DefaultPlayer extends Entity implements Player {
     }
 
     @Override
-    public void updateX(Level level) {
-        updateRunSpeed(level, keyboard.isLeftPressed(), keyboard.isRightPressed());
+    public void updateX(Level level, Keyboard keyboard) {
+        updateRunSpeed(level, keyboard, keyboard.isLeftPressed(), keyboard.isRightPressed());
     }
 
     @Override
-    public void updateRunSpeed(Level level, boolean moveLeft, boolean moveRight) {
+    public void updateRunSpeed(Level level, Keyboard keyboard, boolean moveLeft, boolean moveRight) {
         if (isOnLadder && !isOnSurface(level)) {
             updateHorizontalFacing(moveLeft, moveRight);
             // animation
@@ -124,7 +123,7 @@ public class DefaultPlayer extends Entity implements Player {
         if (isOnLadder && (moveLeft || moveRight)) {
             isOnLadder = false;
         }
-        super.updateRunSpeed(level, moveLeft, moveRight);
+        super.updateRunSpeed(level, keyboard, moveLeft, moveRight);
         if (isOverLadder(level) && (keyboard.isUpPressed() || keyboard.isDownPressed())) {
             isOnLadder = true;
             inJump = 0;
@@ -139,7 +138,8 @@ public class DefaultPlayer extends Entity implements Player {
     }
 
     private int lastBulletFrame = 0;
-    public SimpleBullet fireBullet() {
+    @Override
+    public Bullet fireBullet(Keyboard keyboard) {
         if (frameHolder.currentFrame() - lastBulletFrame < 6) {
             return null;
         }
@@ -186,6 +186,11 @@ public class DefaultPlayer extends Entity implements Player {
         }
 
         return bullet;
+    }
+
+    private List<Bullet> fireBullet(int centerX, int centerY, int directionX, int directionY) {
+        double angle = Math.atan2(directionY, directionX);
+        return Collections.emptyList();
     }
 
     @Override

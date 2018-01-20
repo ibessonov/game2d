@@ -5,7 +5,7 @@ package com.ibessonov.game;
  */
 public interface Updatable {
 
-    default void updateY(Level level) {}
+    default void updateY(Level level, Keyboard keyboard) {}
 
-    default void updateX(Level level) {}
+    default void updateX(Level level, Keyboard keyboard) {}
 }

@@ -36,6 +36,6 @@ public class Trigger extends Rectangle {
     }
 
     public enum TriggerType {
-        HORIZONTAL, VERTICAL, SEAMLESS;
+        HORIZONTAL, VERTICAL, SEAMLESS
     }
 }

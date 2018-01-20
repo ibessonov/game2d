@@ -1,8 +1,9 @@
 package com.ibessonov.game.player;
 
+import com.ibessonov.game.Bullet;
+import com.ibessonov.game.Keyboard;
 import com.ibessonov.game.Level;
 import com.ibessonov.game.Rectangular;
-import com.ibessonov.game.SimpleBullet;
 
 import java.awt.*;
 
@@ -73,13 +74,13 @@ public abstract class BridgedPlayer implements Player {
     }
 
     @Override
-    public void updateY(Level level) {
-        delegate.updateY(level);
+    public void updateY(Level level, Keyboard keyboard) {
+        delegate.updateY(level, keyboard);
     }
 
     @Override
-    public void updateX(Level level) {
-        delegate.updateX(level);
+    public void updateX(Level level, Keyboard keyboard) {
+        delegate.updateX(level, keyboard);
     }
 
     @Override
@@ -88,8 +89,8 @@ public abstract class BridgedPlayer implements Player {
     }
 
     @Override
-    public SimpleBullet fireBullet() {
-        return delegate.fireBullet();
+    public Bullet fireBullet(Keyboard keyboard) {
+        return delegate.fireBullet(keyboard);
     }
 
     @Override

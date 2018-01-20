@@ -3,6 +3,9 @@ package com.ibessonov.game;
 import com.ibessonov.game.core.states.GameState;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+
+import static com.ibessonov.game.Effects.blur;
 
 public class PauseGameState implements GameState {
 
@@ -20,6 +23,12 @@ public class PauseGameState implements GameState {
 
     @Override
     public void render(BufferedImage image) {
+        int[][] matrix = {
+                {0, 1, 0},
+                {1, 252, 1},
+                {0, 1, 0}
+        };
+        blur(((DataBufferInt) image.getRaster().getDataBuffer()).getData(), matrix);
     }
 
     @Override

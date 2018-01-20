@@ -30,6 +30,8 @@ import static java.lang.Math.min;
  */
 public class GameStateImpl implements GameState {
 
+    private final FrameHolder frame = new FrameHolder(); //TODO delete
+
     private Level level;
 
     private final ProxyPlayer player;
@@ -51,8 +53,8 @@ public class GameStateImpl implements GameState {
 
     private final BufferedImage background = loadImage("back.png");
 
-    public GameStateImpl(Keyboard keyboard, FrameHolder frame) {
-        player = new ProxyPlayer(new DefaultPlayer(keyboard, frame));
+    public GameStateImpl() {
+        player = new ProxyPlayer(new DefaultPlayer(frame));
 
         loadLevelData(new Level(1));
         player.setPosition(2 * TILE, (level.height() - 8) * TILE);
@@ -85,6 +87,8 @@ public class GameStateImpl implements GameState {
 
     @Override
     public void update(Keyboard keyboard) {
+        frame.tick();
+
         player.next();
 
         if (keyboard.isStartTapped()) {
@@ -98,15 +102,15 @@ public class GameStateImpl implements GameState {
 //        }
 
         if (keyboard.isFireTapped()/* || keyboard.isFirePressed()*/) {
-            SimpleBullet bullet = player.fireBullet();
+            Bullet bullet = player.fireBullet(keyboard);
             if (bullet != null) {
 
                 bullets.add(bullet);
             }
         }
 
-        updatables.forEach(u -> u.updateY(level));
-        updatables.forEach(u -> u.updateX(level));
+        updatables.forEach(u -> u.updateY(level, keyboard));
+        updatables.forEach(u -> u.updateX(level, keyboard));
 
         for (Item item : items) {
             if (item.intersects(player)) {
@@ -166,29 +170,32 @@ public class GameStateImpl implements GameState {
 
         int leftBorder = 8 * TILE; // ?
         int rightBorder = SCREEN_WIDTH - 8 * TILE - player.width();
-        int offset = 0;
+        int dxOffset = 0;
         if (playerLocalX < leftBorder) {
-            offset = playerLocalX - leftBorder;
+            dxOffset = playerLocalX - leftBorder;
         }
         if (playerLocalX > rightBorder) {
-            offset = playerLocalX - rightBorder;
+            dxOffset = playerLocalX - rightBorder;
         }
 
-        xOffset += offset;
+        xOffset += dxOffset;
         xOffset = max(0, xOffset);
         xOffset = min(level.width() * TILE - SCREEN_WIDTH, xOffset);
 
         int upperBorder = 2 * TILE;
         int lowerBorder = SCREEN_HEIGHT - 3 * TILE - player.height();
-        offset = 0;
+        int dyOffset = 0;
         if (playerLocalY < upperBorder) {
-            offset = playerLocalY - upperBorder;
+            dyOffset = playerLocalY - upperBorder;
         }
         if (playerLocalY > lowerBorder) {
-            offset = playerLocalY - lowerBorder;
+            dyOffset = playerLocalY - lowerBorder;
         }
 
-        yOffset += offset;
+//        if (Math.abs(dyOffset) > 4) { //TODO make it smooth?
+//            dyOffset = Integer.signum(dyOffset) * 4;
+//        }
+        yOffset += dyOffset;
         yOffset = max(0, yOffset);
         yOffset = min(level.height() * TILE - SCREEN_HEIGHT, yOffset);
     }
