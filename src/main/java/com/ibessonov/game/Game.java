@@ -56,8 +56,6 @@ public class Game {
         canvas.setMinimumSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
         canvas.setPreferredSize(canvas.getMinimumSize());
 
-        canvas.setFocusable(true);
-
         canvas.setBackground(Color.BLACK);
 
         //TODO not conventional, there's another keyboard listener for every purpose
@@ -75,14 +73,18 @@ public class Game {
         jFrame.setUndecorated(true);
         DEVICE.setFullScreenWindow(jFrame);
         canvas.setPreferredSize(new Dimension(DEVICE.getDisplayMode().getWidth(), DEVICE.getDisplayMode().getHeight()));
+        jFrame.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB), new Point(), "nothing"));
 
         jFrame.add(canvas, BorderLayout.CENTER);
         jFrame.pack();
 
+        canvas.setFocusable(true);
+        canvas.requestFocus();
         canvas.createBufferStrategy(3);
         jFrame.setVisible(true);
 
-        gameState = new GameStateImpl();
+        gameState = //new MenuGameState();
+                    new GameStateImpl();
     }
 
     public void tick() {

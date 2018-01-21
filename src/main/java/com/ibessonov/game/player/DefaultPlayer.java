@@ -91,8 +91,8 @@ public class DefaultPlayer extends Entity implements Player {
     }
 
     private boolean isOverLadder(Level level) {
-        return verticalCollision(toTile(centerX() - 5), level::isLadder)
-            && verticalCollision(toTile(centerX() + 4), level::isLadder);
+        return verticalCollision(toTile(centerX() - 6), level::isLadder)
+            && verticalCollision(toTile(centerX() + 5), level::isLadder);
     }
 
     @Override

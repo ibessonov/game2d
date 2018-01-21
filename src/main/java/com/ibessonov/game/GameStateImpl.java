@@ -19,7 +19,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import static com.ibessonov.game.Constants.*;
 import static com.ibessonov.game.Conversion.toScreen;
 import static com.ibessonov.game.Conversion.toTile;
-import static com.ibessonov.game.Effects.*;
+import static com.ibessonov.game.Effects.nightVision;
+import static com.ibessonov.game.Effects.noise;
 import static com.ibessonov.game.resources.Resources.loadImage;
 import static com.ibessonov.game.util.Container.*;
 import static java.lang.Math.max;
@@ -226,14 +227,6 @@ public class GameStateImpl implements GameState {
 
 
     private void postEffects(int[] data) {
-        int[][] matrix = {
-                {1, 2, 1},
-                {2, 36, 2},
-                {1, 2, 1}
-        };
-        blur(data, matrix);
-//        blur(data, matrix);
-
         if (nightVision) {
             nightVision(data);
             noise(data, 16);

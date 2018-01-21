@@ -104,8 +104,18 @@ class KeyboardImpl implements Keyboard {
     }
 
     @Override
+    public boolean isUpTapped() {
+        return tapped(MASK_UP);
+    }
+
+    @Override
     public boolean isDownPressed() {
         return !pressed(MASK_UP) && pressed(MASK_DOWN);
+    }
+
+    @Override
+    public boolean isDownTapped() {
+        return tapped(MASK_DOWN);
     }
 
     @Override

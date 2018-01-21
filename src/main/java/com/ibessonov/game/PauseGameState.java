@@ -11,6 +11,7 @@ public class PauseGameState implements GameState {
 
     private final GameState previous;
     private boolean unpause = false;
+    private int duration = 0;
 
     public PauseGameState(GameState previous) {
         this.previous = previous;
@@ -23,6 +24,7 @@ public class PauseGameState implements GameState {
 
     @Override
     public void render(BufferedImage image) {
+        if (++duration > 20) return;
         int[][] matrix = {
                 {0, 1, 0},
                 {1, 252, 1},
