@@ -1,7 +1,13 @@
 package com.ibessonov.game;
 
+import com.ibessonov.game.core.physics.XDirection;
+import com.ibessonov.game.core.physics.YDirection;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
+
+import static com.ibessonov.game.core.physics.XDirection.RIGHT;
+import static com.ibessonov.game.core.physics.YDirection.DOWN;
 
 /**
  * @author ibessonov
@@ -24,20 +30,20 @@ public class Sprite {
         this.image = image;
     }
 
-    public void draw(int x, int y, boolean facingRight, boolean facingDown, Graphics g) {
+    public void draw(int x, int y, XDirection xDirection, YDirection yDirection, Graphics g) {
         int iX = x;
         int iY = y;
         int iW = image.getWidth();
         int iH = image.getHeight();
 
-        if (facingRight) {
+        if (xDirection == RIGHT) {
             iX = iX - dx;
         } else {
             iX = iX + w + dx;
             iW = -iW;
         }
 
-        if (facingDown) {
+        if (yDirection == DOWN) {
             iY = iY - dy;
         } else {
             iY = iY + h + dy;
@@ -48,6 +54,6 @@ public class Sprite {
     }
 
     public void draw(int x, int y, Graphics g) {
-        draw(x, y, true, true, g);
+        draw(x, y, RIGHT, DOWN, g);
     }
 }

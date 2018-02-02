@@ -19,12 +19,12 @@ public final class SubPixel {
     }
 
     public static SubPixel subPixel(float value) {
-        return new SubPixel(Math.round(value * SCALE));
+        return new SubPixel(round(value * SCALE));
     }
 
 
     public int intValue() {
-        return Math.round(floatValue());
+        return round(floatValue());
     }
 
     public float floatValue() {
@@ -42,7 +42,7 @@ public final class SubPixel {
     }
 
     public void set(float value) {
-        this.value = Math.round(value * SCALE);
+        this.value = round(value * SCALE);
     }
 
     public void set(SubPixel subPixel) {
@@ -55,10 +55,16 @@ public final class SubPixel {
     }
 
     public void add(float diff) {
-        this.value += Math.round(diff * SCALE);
+        this.value += round(diff * SCALE);
     }
 
     public void add(SubPixel diff) {
         this.value += diff.value;
+    }
+
+
+    private static int round(float value) {
+//        return (int) (value + .5f); // no
+        return Math.round(value);
     }
 }

@@ -6,7 +6,10 @@ package com.ibessonov.game;
 public interface Keyboard {
 
     boolean isLeftPressed();
+    boolean isLeftTapped();
+
     boolean isRightPressed();
+    boolean isRightTapped();
 
     boolean isUpPressed();
     boolean isUpTapped();
@@ -15,9 +18,9 @@ public interface Keyboard {
     boolean isDownTapped();
 
     boolean isJumpPressed();
-
     boolean isJumpTapped();
 
+    boolean isFirePressed();
     boolean isFireTapped();
 
     boolean isStartTapped();

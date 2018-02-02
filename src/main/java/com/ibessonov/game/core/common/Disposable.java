@@ -1,4 +1,4 @@
-package com.ibessonov.game;
+package com.ibessonov.game.core.common;
 
 /**
  * @author ibessonov

@@ -1,4 +1,4 @@
-package com.ibessonov.game.util;
+package com.ibessonov.game.core.common.util;
 
 import java.util.Collection;
 import java.util.Iterator;

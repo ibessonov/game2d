@@ -1,12 +1,18 @@
 package com.ibessonov.game;
 
+import com.ibessonov.game.core.common.util.BiIntPredicate;
+import com.ibessonov.game.core.geometry.Rectangular;
 import com.ibessonov.game.core.geometry.SubPixel;
-import com.ibessonov.game.core.physics.SpeedInfo;
-import com.ibessonov.game.util.BiIntPredicate;
+import com.ibessonov.game.core.physics.XDirection;
+import com.ibessonov.game.core.physics.YDirection;
 
 import static com.ibessonov.game.Constants.TILE;
 import static com.ibessonov.game.Conversion.toTile;
 import static com.ibessonov.game.core.geometry.SubPixel.subPixel;
+import static com.ibessonov.game.core.physics.XDirection.LEFT;
+import static com.ibessonov.game.core.physics.XDirection.RIGHT;
+import static com.ibessonov.game.core.physics.YDirection.DOWN;
+import static com.ibessonov.game.core.physics.YDirection.UP;
 import static java.lang.Integer.signum;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -16,7 +22,7 @@ import static java.lang.Math.min;
  */
 //TODO rename and split into several classes
 //TODO facing* fields don't feel like they belong here
-public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Rectangular, Positionable {
+public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Rectangular, Positionable, HasRectangularHitBox {
 
     protected final SubPixel x = subPixel(0);
     protected final SubPixel y = subPixel(0);
@@ -25,24 +31,20 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     protected final int height;
 
     protected final SubPixel speedX = subPixel(0);
-    protected final SpeedInfo speedInfo;
-
     protected final SubPixel speedY = subPixel(0);
     protected final SubPixel jumpSpeed;
 
     private Platform currentPlatform;
     private final SubPixel currentPlatformDx = subPixel(0);
 
-    protected boolean facingRight = true;
-    protected boolean facingDown = true;
+    protected XDirection xDirection = RIGHT;
+    protected YDirection yDirection = DOWN;
 
     private int lifeLevel = initialLifeLevel();
 
-    public Entity(int width, int height, float jumpSpeed, float initialSpeed, float maxSpeed, float acceleration) {
+    public Entity(int width, int height, float jumpSpeed) {
         this.width = width;
         this.height = height;
-
-        this.speedInfo = new SpeedInfo(initialSpeed, acceleration, maxSpeed);
         this.jumpSpeed = subPixel(jumpSpeed);
     }
 
@@ -72,22 +74,17 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
         return height;
     }
 
-    public void setOrientation(boolean facingRight, boolean facingDown) {
-        this.facingRight = facingRight;
-        this.facingDown = facingDown;
+    public void setOrientation(XDirection xDirection, YDirection yDirection) {
+        this.xDirection = xDirection;
+        this.yDirection = yDirection;
     }
 
     @Override
     public void updateY(Level level, Keyboard keyboard) {
-        if (facingDown != level.gravity().isDown()) {
+        if (yDirection != level.gravity().yDirection()) {
             clearCurrentPlatform();
+            yDirection = level.gravity().yDirection();
         }
-        facingDown = level.gravity().isDown();
-    }
-
-    public boolean updateGravityAndCollisions(Level level) {
-        updateGravity(level);
-        return updateYCollision(level);
     }
 
     protected void updateGravity(Level level) {
@@ -112,7 +109,15 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     }
 
     protected void updateHorizontalFacing(boolean moveLeft, boolean moveRight) {
-        facingRight = moveRight || facingRight && !moveLeft;
+        if (xDirection == RIGHT) {
+            if (moveLeft) {
+                xDirection = LEFT;
+            }
+        } else {
+            if (moveRight) {
+                xDirection = RIGHT;
+            }
+        }
     }
 
     public void updateRunSpeed(Level level, Keyboard keyboard, boolean moveLeft, boolean moveRight) {
@@ -126,10 +131,13 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
                 x.add(currentPlatformDx);
             }
         }
-        speedInfo.update(speedX, moveLeft, moveRight);
+        accelerate(keyboard, moveLeft, moveRight);
         x.add(speedX);
 
         updateXCollision(level);
+    }
+
+    protected void accelerate(Keyboard keyboard, boolean moveLeft, boolean moveRight) {
     }
 
     protected boolean updateXCollision(Level level) {
@@ -149,7 +157,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
             if (currentPlatform.disposed()) {
                 clearCurrentPlatform();
             } else {
-                if (facingDown) {
+                if (yDirection == DOWN) {
                     y.set(currentPlatform.y() - height);
                 } else {
                     y.set(currentPlatform.y() + currentPlatform.height());
@@ -200,7 +208,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     }
 
     private Platform platformBelowMe(Level level) {
-        int sign = facingDown ? 1 : -1;
+        int sign = yDirection.sign;
 
         y.add(sign);
         for (Platform platform : level.platforms()) {
@@ -217,7 +225,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
 
     protected boolean handleCeilCollision(Level level) {
         boolean tilesCollision = speedY.floatValue() < 0 && horizontalTilesCollision(toTile(y()), level);
-        if (tilesCollision && facingDown) {
+        if (tilesCollision && yDirection == DOWN) {
             x.add(-1);
             tilesCollision = horizontalTilesCollision(toTile(y()), level);
             if (tilesCollision) {
@@ -238,7 +246,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
         for (Platform platform : level.platforms()) {
             if (platform.centerY() < centerY() && intersects(platform)) {
                 y.set(platform.y() + platform.height());
-                if (!facingDown) {
+                if (yDirection == UP) {
                     setCurrentPlatform(platform);
                     currentPlatformDx.set(x);
                     currentPlatformDx.add(-platform.x());
@@ -251,7 +259,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
 
     protected boolean handleFloorCollision(Level level) {
         boolean tilesCollision = speedY.floatValue() > 0 && horizontalTilesCollision(toTile(y() + height - 1), level);
-        if (tilesCollision && !facingDown) {
+        if (tilesCollision && yDirection == UP) {
             x.add(-1);
             tilesCollision = horizontalTilesCollision(toTile(y() + height - 1), level);
             if (tilesCollision) {
@@ -273,7 +281,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
         for (Platform platform : level.platforms()) {
             if (platform.centerY() > centerY() && intersects(platform)) {
                 y.set(platform.y() - height);
-                if (facingDown) {
+                if (yDirection == DOWN) {
                     currentPlatformDx.set(x);
                     currentPlatformDx.add(-platform.x());
                 }
@@ -292,7 +300,9 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
         for (Platform platform : level.platforms()) {
             if (platform.centerX() < centerX() && intersects(platform)) {
                 x.set(platform.x() + platform.width());
-                speedX.set(0);
+//                if (speedX.floatValue() < 0) {
+//                    speedX.set(0);
+//                }
                 return true;
             }
         }
@@ -308,7 +318,9 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
         for (Platform platform : level.platforms()) {
             if (platform.centerX() > centerX() && intersects(platform)) {
                 x.set(platform.x() - width);
-                speedX.set(0);
+//                if (speedX.floatValue() > 0) {
+//                    speedX.set(0);
+//                }
                 return true;
             }
         }
@@ -317,7 +329,7 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
 
     protected boolean isOnSurface(Level level) {
         if (platformBelowMe(level) != null) return true;
-        if (facingDown) {
+        if (yDirection == DOWN) {
             return horizontalTilesCollision(toTile(y() + height), level);
         } else {
             return horizontalTilesCollision(toTile(y() - 1), level);
@@ -325,8 +337,12 @@ public abstract class Entity implements Updatable, Drawable, HasLifeLevel, Recta
     }
 
     protected boolean horizontalTilesCollision(int i, Level level) {
+        return horizontalCollision(i, level::isSolid);
+    }
+
+    protected boolean horizontalCollision(int i, BiIntPredicate condition) {
         for (int j = toTile(x()), jRight = toTile(x() + width - 1); j <= jRight; j++) {
-            if (level.isSolid(i, j)) {
+            if (condition.test(i, j)) {
                 return true;
             }
         }

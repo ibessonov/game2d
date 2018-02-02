@@ -1,13 +1,18 @@
 package com.ibessonov.game;
 
+import com.ibessonov.game.core.physics.XDirection;
+
 import java.awt.*;
+
+import static com.ibessonov.game.core.physics.XDirection.LEFT;
+import static com.ibessonov.game.core.physics.XDirection.RIGHT;
 
 class HorizontalPlatform extends Rectangle implements Platform {
 
     private int start;
     private int speed;
     private int total;
-    private boolean right;
+    private XDirection xDirection;
 
     public HorizontalPlatform(int x, int y, int w, int h, int start, int speed, int total, boolean right) {
         super(w, h);
@@ -15,22 +20,22 @@ class HorizontalPlatform extends Rectangle implements Platform {
         this.start = x + start;
         this.speed = speed;
         this.total = total;
-        this.right = right;
+        this.xDirection = right ? RIGHT : LEFT;
     }
 
     @Override
     public void updateX(Level level, Keyboard keyboard) {
-        if (right) {
+        if (xDirection == RIGHT) {
             x += speed;
             if (x >= start + total - width) {
                 x = start + total - width;
-                right = false;
+                xDirection = LEFT;
             }
         } else {
             x -= speed;
             if (x <= start) {
                 x = start;
-                right = true;
+                xDirection = RIGHT;
             }
         }
     }

@@ -19,13 +19,14 @@ class KeyboardImpl implements Keyboard {
 
     private static final boolean windows = System.getProperty("os.name", "").toLowerCase().contains("windows");
 
-    private static final int MASK_LEFT  = 0x01;
-    private static final int MASK_RIGHT = 0x02;
-    private static final int MASK_DOWN  = 0x04;
-    private static final int MASK_UP    = 0x08;
-    private static final int MASK_JUMP  = 0x10;
-    private static final int MASK_FIRE  = 0x20;
-    private static final int MASK_START = 0x40;
+    private static final int MASK_LEFT  = 0x0001;
+    private static final int MASK_RIGHT = 0x0002;
+    private static final int MASK_DOWN  = 0x0004;
+    private static final int MASK_UP    = 0x0008;
+    private static final int MASK_JUMP  = 0x0010;
+    private static final int MASK_FIRE  = 0x0020;
+    private static final int MASK_START = 0x0040;
+    private static final int MASK_PAUSE = 0x0080;
 
     private int mask;
     private int oldm;
@@ -38,7 +39,7 @@ class KeyboardImpl implements Keyboard {
 
         if (windows) {
             Controller[] ca = ControllerEnvironment.getDefaultEnvironment().getControllers();
-            controller = ca[ca.length - 1];
+            controller = ca[ca.length - 1]; // bullshit =)
 //        for (Component component : controller.getComponents()) {
 //            System.out.println(component.getIdentifier().getName());
 //        }
@@ -94,8 +95,18 @@ class KeyboardImpl implements Keyboard {
     }
 
     @Override
+    public boolean isLeftTapped() {
+        return tapped(MASK_LEFT);
+    }
+
+    @Override
     public boolean isRightPressed() {
         return !pressed(MASK_LEFT) && pressed(MASK_RIGHT);
+    }
+
+    @Override
+    public boolean isRightTapped() {
+        return tapped(MASK_RIGHT);
     }
 
     @Override
@@ -126,6 +137,11 @@ class KeyboardImpl implements Keyboard {
     @Override
     public boolean isJumpTapped() {
         return tapped(MASK_JUMP);
+    }
+
+    @Override
+    public boolean isFirePressed() {
+        return pressed(MASK_FIRE);
     }
 
     @Override

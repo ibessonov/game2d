@@ -1,17 +1,17 @@
 package com.ibessonov.game;
 
 import com.ibessonov.game.core.physics.Gravity;
+import com.ibessonov.game.core.physics.YDirection;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.ibessonov.game.Constants.TILE;
-import static com.ibessonov.game.Trigger.TriggerType.HORIZONTAL;
-import static com.ibessonov.game.Trigger.TriggerType.VERTICAL;
+import static com.ibessonov.game.Trigger.TriggerType.*;
 import static com.ibessonov.game.resources.Resources.loadImage;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 /**
@@ -34,13 +34,13 @@ public class Level {
     };
     private final int[][] level2 = {
             {1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+            {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -58,16 +58,29 @@ public class Level {
     };
     private final int[][] level3 = {
             {1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
-            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1},
-            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1},
-            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1},
-            {1, 0, 0, 0, 0, 3, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 3, 1, 1},
+            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 3, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 3, 0, 1},
             {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 1},
             {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 0},
             {1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 0},
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1},
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1},
             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1}
+    };
+    private final int[][] level4 = {
+            {1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     };
 
     private final int height;
@@ -77,13 +90,14 @@ public class Level {
 
     private List<Platform> platforms = new ArrayList<>();
 
-    private final Gravity gravity = new Gravity(0.375f, 7f, true);
+    private final Gravity gravity = new Gravity(0.375f, 7f, YDirection.DOWN);
 
     public Level(int number) {
         this.number = number;
         map    = copy(number == 1 ? level1
                     : number == 2 ? level2
-                    :               level3);
+                    : number == 3 ? level3
+                    :               level4);
         height = map.length;
         width  = map[0].length;
 
@@ -158,18 +172,25 @@ public class Level {
     public List<Trigger> triggers() {
         switch (number) {
             case 1:
-                return Arrays.asList(
+                return asList(
                         new Trigger(20 *  TILE + 7, (11 - 5) * TILE, 1, 2 * TILE,
                             2, 7, (22 - 5) * TILE, HORIZONTAL),
                         new Trigger((20 - 3) * TILE, -14, TILE, 1,
                             3, (20 - 3) * TILE, 11 * TILE - 14, VERTICAL)
                 );
             case 2:
-                return singletonList(new Trigger(-7 - 1, (22 - 5) * TILE, 1, 2 * TILE,
-                            1, 20 * TILE - 7 - 1, (11 - 5) * TILE, HORIZONTAL));
+                return asList(
+                        new Trigger(-7 - 1, (22 - 5) * TILE, 1, 2 * TILE,
+                            1, 20 * TILE - 7 - 1, (11 - 5) * TILE, HORIZONTAL),
+                        new Trigger(11 * TILE, -3 * TILE, 1, 6 * TILE,
+                            4, 11 * TILE, -3 * TILE, SEAMLESS)
+                );
             case 3:
                 return singletonList(new Trigger((20 - 3) * TILE, 11 * TILE + 14, TILE, 1,
                             1, (20 - 3) * TILE,  14, VERTICAL));
+            case 4:
+                return singletonList(new Trigger(8 * TILE, -3 * TILE, 1, 6 * TILE,
+                        2, 8 * TILE, -3 * TILE, SEAMLESS));
             default:
                 throw new UnsupportedOperationException();
         }
@@ -179,5 +200,18 @@ public class Level {
         if (!isOutOfBounds(i, j)) {
             map[i][j] = 0;
         }
+    }
+
+    private static class LevelData {
+
+        private String id;
+
+        private int width;
+        private int height;
+
+        private int globalX;
+        private int globalY;
+
+        private List<Trigger> triggers;
     }
 }

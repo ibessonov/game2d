@@ -1,5 +1,8 @@
-package com.ibessonov.game.util;
+package com.ibessonov.game.core.common.util;
 
+/**
+ * @author ibessonov
+ */
 @FunctionalInterface
 public interface BiIntPredicate {
 

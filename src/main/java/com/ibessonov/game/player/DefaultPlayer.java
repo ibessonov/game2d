@@ -1,6 +1,7 @@
 package com.ibessonov.game.player;
 
 import com.ibessonov.game.*;
+import com.ibessonov.game.core.physics.SpeedInfo;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -10,6 +11,9 @@ import java.util.List;
 import static com.ibessonov.game.Constants.TILE;
 import static com.ibessonov.game.Conversion.toScreen;
 import static com.ibessonov.game.Conversion.toTile;
+import static com.ibessonov.game.core.physics.XDirection.RIGHT;
+import static com.ibessonov.game.core.physics.YDirection.DOWN;
+import static com.ibessonov.game.core.physics.YDirection.UP;
 
 /**
  * @author ibessonov
@@ -21,9 +25,10 @@ public class DefaultPlayer extends Entity implements Player {
     private int inJump;
 
     protected boolean isOnLadder = false;
+    private SpeedInfo speedInfo = new SpeedInfo(.25f, .25f, 1.875f);
 
     public DefaultPlayer(FrameHolder frameHolder) {
-        super(TILE - 2, 2 * TILE - 4, 3.625f, 1f, 1.875f, 0.25f);
+        super(TILE - 2, 2 * TILE - 4, 3.625f);
         this.frameHolder = frameHolder;
     }
 
@@ -53,7 +58,7 @@ public class DefaultPlayer extends Entity implements Player {
                 handleJump(level, jumpTapped);
             }
         } else {
-            if (level.gravity().isDown() != facingDown) {
+            if (level.gravity().yDirection() != yDirection) {
                 inJump = 0;
             }
             super.updateY(level, keyboard);
@@ -70,8 +75,24 @@ public class DefaultPlayer extends Entity implements Player {
             if (inJump > 0) {
                 inJump++;
             }
-            if (super.updateGravityAndCollisions(level)) {
+            updateGravity(level);
+            if (updateYCollision(level)) {
                 inJump = (speedY.floatValue() == 0f) ? 0 : 1000;
+            } else {
+                if (yDirection == DOWN && speedY.floatValue() > 0
+                        && horizontalCollision(toTile(y() + height - 1), level::isLadder)
+                        && !horizontalCollision(toTile(y() + height - 1 - speedY.intValue()), level::isLadder)) {
+                    inJump = 0;
+                    speedY.set(0);
+                    y.set(toScreen(toTile(y() + height - 1)) - height);
+                }
+                if (yDirection == UP && speedY.floatValue() < 0
+                        && horizontalCollision(toTile(y()), level::isLadder)
+                        && !horizontalCollision(toTile(y() - speedY.intValue()), level::isLadder)) {
+                    inJump = 0;
+                    speedY.set(0);
+                    y.set(toScreen(toTile(y()) + 1));
+                }
             }
         }
     }
@@ -86,13 +107,28 @@ public class DefaultPlayer extends Entity implements Player {
         return false;
     }
 
+    @Override
+    protected boolean isOnSurface(Level level) {
+        if (super.isOnSurface(level)) {
+            return true;
+        }
+        // ability to jump from the top of the ladder
+        if (yDirection == DOWN) {
+            return horizontalCollision(toTile(y() + height), level::isLadder)
+               && !horizontalCollision(toTile(y() + height - 1), level::isLadder);
+        } else {
+            return horizontalCollision(toTile(y() - 1), level::isLadder)
+               && !horizontalCollision(toTile(y()), level::isLadder);
+        }
+    }
+
     private boolean isStillOnLadder(Level level) {
         return verticalCollision(toTile(x()), level::isLadder);
     }
 
     private boolean isOverLadder(Level level) {
-        return verticalCollision(toTile(centerX() - 6), level::isLadder)
-            && verticalCollision(toTile(centerX() + 5), level::isLadder);
+        return verticalCollision(toTile(x()), level::isLadder)
+            && verticalCollision(toTile(x() + width() - 1), level::isLadder);
     }
 
     @Override
@@ -124,17 +160,44 @@ public class DefaultPlayer extends Entity implements Player {
             isOnLadder = false;
         }
         super.updateRunSpeed(level, keyboard, moveLeft, moveRight);
-        if (isOverLadder(level) && (keyboard.isUpPressed() || keyboard.isDownPressed())) {
-            isOnLadder = true;
-            inJump = 0;
-            speedX.set(0);
-            speedY.set(0);
-            x.set(toScreen(toTile(centerX())) + (TILE - width()) / 2);
-            y.round();
+        if ((keyboard.isUpPressed() || keyboard.isDownPressed()) && isOverLadder(level)) {
+            climbLadder();
         }
+
+        if (yDirection == DOWN && keyboard.isDownPressed() && horizontalCollision(toTile(y() + height), level::isLadder)) {
+            y.add(1);
+            if (isOverLadder(level)) {
+                climbLadder();
+            } else {
+                y.add(-1);
+            }
+        }
+        if (yDirection == UP && keyboard.isUpPressed() && horizontalCollision(toTile(y() - 1), level::isLadder)) {
+            y.add(-1);
+            if (isOverLadder(level)) {
+                climbLadder();
+            } else {
+                y.add(1);
+            }
+        }
+
         if (speedX.floatValue() == 0f) {
             x.round();
         }
+    }
+
+    @Override
+    protected void accelerate(Keyboard keyboard, boolean moveLeft, boolean moveRight) {
+        speedInfo.update(speedX, moveLeft, moveRight);
+    }
+
+    private void climbLadder() {
+        isOnLadder = true;
+        inJump = 0;
+        speedX.set(0);
+        speedY.set(0);
+        x.set(toScreen(toTile(centerX())) + (TILE - width()) / 2);
+        y.round();
     }
 
     private int lastBulletFrame = 0;
@@ -160,7 +223,7 @@ public class DefaultPlayer extends Entity implements Player {
                 speedX = -4;
             }
         } else {
-            if (facingRight) {
+            if (xDirection == RIGHT) {
                 speedX = 6;
             } else {
                 speedX = -6;
@@ -168,19 +231,19 @@ public class DefaultPlayer extends Entity implements Player {
         }
         SimpleBullet bullet = new SimpleBullet(speedX, speedY);
 
-        bullet.setOrientation(facingRight, facingDown); // graphics only
+        bullet.setOrientation(xDirection, yDirection); // graphics only
         if (speedY == 0) {
-            int bulletX = x() + (facingRight ? width + 9 : -bullet.width() - 9);
-            int bulletY = y() + 12 + (facingDown ? 0 : 1);
+            int bulletX = x() + (xDirection == RIGHT ? width + 9 : -bullet.width() - 9);
+            int bulletY = y() + 12 + (yDirection == DOWN ? 0 : 1);
             bullet.setPosition(bulletX - speedX, bulletY - speedY);
         } else if (speedX == 0) {
-            int bulletX = centerX() - bullet.width() / 2 + (facingRight ? 0 : -2);
+            int bulletX = centerX() - bullet.width() / 2 + (xDirection == RIGHT ? 0 : -2);
             int bulletY = y() + (speedY > 0 ? height : -bullet.height());
             bullet.setPosition(bulletX - speedX, bulletY - speedY);
         } else {
-            int bulletX1 = x() + (facingRight ? width + 9 : -bullet.width() - 9);
-            int bulletY1 = y() + 12 + (facingDown ? 0 : 1);
-            int bulletX2 = centerX() - bullet.width() / 2 + (facingRight ? 0 : -2);
+            int bulletX1 = x() + (xDirection == RIGHT ? width + 9 : -bullet.width() - 9);
+            int bulletY1 = y() + 12 + (yDirection == DOWN ? 0 : 1);
+            int bulletX2 = centerX() - bullet.width() / 2 + (xDirection == RIGHT ? 0 : -2);
             int bulletY2 = y() + (speedY > 0 ? height : -bullet.height());
             bullet.setPosition((bulletX1 + bulletX2) / 2 - speedX, (bulletY1 + bulletY2) / 2 - speedY);
         }
@@ -200,7 +263,7 @@ public class DefaultPlayer extends Entity implements Player {
             playerSprite = PlayerSprites.PLAYER_RUN[animationSprite];
         }
         Sprite s = new Sprite(2, 0, width, height, playerSprite);
-        s.draw(x() - xOffset, y() - yOffset, facingRight, facingDown, g);
+        s.draw(x() - xOffset, y() - yOffset, xDirection, yDirection, g);
     }
 
     public void interruptJumping() {

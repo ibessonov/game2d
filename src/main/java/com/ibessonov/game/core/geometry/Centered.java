@@ -1,9 +1,12 @@
-package com.ibessonov.game;
+package com.ibessonov.game.core.geometry;
 
 import java.util.Comparator;
 
 import static java.util.Comparator.comparingInt;
 
+/**
+ * @author ibessonov
+ */
 public interface Centered {
 
     int centerX();

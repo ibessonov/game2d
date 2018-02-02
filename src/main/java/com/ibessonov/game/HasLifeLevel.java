@@ -1,5 +1,7 @@
 package com.ibessonov.game;
 
+import com.ibessonov.game.core.common.Disposable;
+
 /**
  * @author ibessonov
  */

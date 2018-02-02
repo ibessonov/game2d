@@ -1,9 +1,6 @@
 package com.ibessonov.game.player;
 
 
-import com.ibessonov.game.Hazard;
-import com.ibessonov.game.Rectangular;
-
 import java.awt.*;
 
 public class InvinciblePlayer extends BridgedPlayer {
@@ -12,8 +9,12 @@ public class InvinciblePlayer extends BridgedPlayer {
     private static final int DURATION = 120;
     private static final int FRAME = 60 / 6;
 
-    public InvinciblePlayer(Player player) {
+    private InvinciblePlayer(Player player) {
         super(player);
+    }
+
+    public static Player transform(Player player) { // how to be sure that player won't become invincible twice?
+        return (player instanceof InvinciblePlayer) ? player : new InvinciblePlayer(player);
     }
 
     @Override
@@ -22,8 +23,7 @@ public class InvinciblePlayer extends BridgedPlayer {
     }
 
     @Override
-    public boolean intersects(Rectangular other) {
-        return !(other instanceof Hazard) && super.intersects(other);
+    public void decreaseLifeLevel(int damage) {
     }
 
     @Override

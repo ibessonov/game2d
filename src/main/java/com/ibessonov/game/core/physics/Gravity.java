@@ -2,6 +2,9 @@ package com.ibessonov.game.core.physics;
 
 import com.ibessonov.game.core.geometry.SubPixel;
 
+import static com.ibessonov.game.core.physics.YDirection.DOWN;
+import static com.ibessonov.game.core.physics.YDirection.UP;
+
 /**
  * @author ibessonov
  */
@@ -9,30 +12,31 @@ public class Gravity {
 
     private final float acceleration;
     private final float terminalVelocity;
-    private int direction;
+    private YDirection direction;
 
-    public Gravity(float acceleration, float terminalVelocity, boolean down) {
+    public Gravity(float acceleration, float terminalVelocity, YDirection direction) {
         this.acceleration = acceleration;
         this.terminalVelocity = terminalVelocity;
-        this.direction = down ? 1 : -1;
+        this.direction = direction;
     }
 
-    public float directedSpeed(float speed) {
-        return direction * speed;
+    public float directedSpeed(float absoluteSpeed) {
+        return direction.sign * absoluteSpeed;
     }
 
     public void accelerate(SubPixel speed) {
-        speed.add(acceleration * direction);
-        if (speed.floatValue() * direction > terminalVelocity) {
-            speed.set(direction * terminalVelocity);
+        int sign = direction.sign;
+        speed.add(acceleration * sign);
+        if (speed.floatValue() * sign > terminalVelocity) {
+            speed.set(sign * terminalVelocity);
         }
     }
 
-    public boolean isDown() {
-        return direction > 0;
+    public YDirection yDirection() {
+        return direction;
     }
 
     public void flip() {
-        direction *= -1;
+        direction = (direction == DOWN) ? UP : DOWN;
     }
 }

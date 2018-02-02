@@ -3,7 +3,7 @@ package com.ibessonov.game;
 /**
  * @author ibessonov
  */
-public class Trigger extends Rectangle {
+public class Trigger extends Rectangle implements HasRectangularHitBox {
 
     private int levelIndex;
     private int toX;

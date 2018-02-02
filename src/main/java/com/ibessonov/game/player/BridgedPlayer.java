@@ -3,7 +3,7 @@ package com.ibessonov.game.player;
 import com.ibessonov.game.Bullet;
 import com.ibessonov.game.Keyboard;
 import com.ibessonov.game.Level;
-import com.ibessonov.game.Rectangular;
+import com.ibessonov.game.core.geometry.hitbox.HitBox;
 
 import java.awt.*;
 
@@ -94,7 +94,7 @@ public abstract class BridgedPlayer implements Player {
     }
 
     @Override
-    public boolean intersects(Rectangular other) {
-        return delegate.intersects(other);
+    public HitBox hitBox() {
+        return delegate.hitBox();
     }
 }

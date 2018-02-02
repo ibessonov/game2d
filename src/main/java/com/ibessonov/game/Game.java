@@ -1,7 +1,6 @@
 package com.ibessonov.game;
 
 import com.ibessonov.game.core.states.GameState;
-import com.ibessonov.game.resources.Resources;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,9 +11,11 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 
-import static com.ibessonov.game.Constants.SCREEN_HEIGHT;
-import static com.ibessonov.game.Constants.SCREEN_WIDTH;
+import static com.ibessonov.game.Constants.*;
+import static com.ibessonov.game.resources.Resources.loadImage;
+import static java.awt.Toolkit.getDefaultToolkit;
 import static java.lang.Math.min;
+import static java.util.Arrays.asList;
 
 /**
  * @author ibessonov
@@ -44,7 +45,7 @@ public class Game {
         jFrame.setIgnoreRepaint(true);
 
         jFrame.setTitle("Gui");
-        jFrame.setIconImage(Resources.loadImage("icon.png"));
+        jFrame.setIconImages(asList(loadImage("icon.png"), loadImage("icon32.png"))); // yes, you can
 
         jFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
@@ -73,7 +74,9 @@ public class Game {
         jFrame.setUndecorated(true);
         DEVICE.setFullScreenWindow(jFrame);
         canvas.setPreferredSize(new Dimension(DEVICE.getDisplayMode().getWidth(), DEVICE.getDisplayMode().getHeight()));
-        jFrame.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB), new Point(), "nothing"));
+
+        Image cursorImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        jFrame.setCursor(getDefaultToolkit().createCustomCursor(cursorImage, new Point(), "Empty Mouse Cursor"));
 
         jFrame.add(canvas, BorderLayout.CENTER);
         jFrame.pack();
@@ -111,7 +114,7 @@ public class Game {
     }
 
     public void start() {
-        Timer.run(this::tick, 60);
+        Timer.run(this::tick, FPS);
     }
 
     public void stop() {

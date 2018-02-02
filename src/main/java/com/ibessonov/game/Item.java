@@ -1,5 +1,6 @@
 package com.ibessonov.game;
 
+import com.ibessonov.game.core.common.Disposable;
 import com.ibessonov.game.player.Player;
 
 import java.awt.*;
@@ -11,7 +12,7 @@ import static com.ibessonov.game.resources.Resources.loadImage;
 /**
  * @author ibessonov
  */
-public class Item extends Rectangle implements Drawable, Disposable {
+public class Item extends Rectangle implements Drawable, Disposable, HasRectangularHitBox {
 
     public static final BufferedImage HEALTH_SPRITE = loadImage("health.png");
     private boolean disposed = false;

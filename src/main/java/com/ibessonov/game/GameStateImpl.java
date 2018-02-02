@@ -1,12 +1,13 @@
 package com.ibessonov.game;
 
+import com.ibessonov.game.core.common.Disposable;
+import com.ibessonov.game.core.common.util.BiIntPredicate;
+import com.ibessonov.game.core.common.util.Container;
 import com.ibessonov.game.core.states.GameState;
 import com.ibessonov.game.enemies.BasicEnemy;
 import com.ibessonov.game.player.DefaultPlayer;
 import com.ibessonov.game.player.InvinciblePlayer;
 import com.ibessonov.game.player.ProxyPlayer;
-import com.ibessonov.game.util.BiIntPredicate;
-import com.ibessonov.game.util.Container;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -14,15 +15,14 @@ import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static com.ibessonov.game.Constants.*;
 import static com.ibessonov.game.Conversion.toScreen;
 import static com.ibessonov.game.Conversion.toTile;
 import static com.ibessonov.game.Effects.nightVision;
 import static com.ibessonov.game.Effects.noise;
+import static com.ibessonov.game.core.common.util.Container.*;
 import static com.ibessonov.game.resources.Resources.loadImage;
-import static com.ibessonov.game.util.Container.*;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -67,16 +67,16 @@ public class GameStateImpl implements GameState {
         enemies.clear();
         items.clear();
 
-        ThreadLocalRandom rnd = ThreadLocalRandom.current();
-        for (int i = 0; i < 5; i++) {
-            BasicEnemy enemy = new BasicEnemy();
-            enemy.setPosition(toScreen(rnd.nextInt(level.width())),
-                    toScreen(rnd.nextInt(level.height())));
-            enemies.add(enemy);
-        }
-        for (int i = 0; i < 5; i++) {
-            items.add(new Item(rnd.nextInt(level.height()), rnd.nextInt(level.width())));
-        }
+//        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+//        for (int i = 0; i < 5; i++) {
+//            BasicEnemy enemy = new BasicEnemy();
+//            enemy.setPosition(toScreen(rnd.nextInt(level.width())),
+//                    toScreen(rnd.nextInt(level.height())));
+//            enemies.add(enemy);
+//        }
+//        for (int i = 0; i < 5; i++) {
+//            items.add(new Item(rnd.nextInt(level.height()), rnd.nextInt(level.width())));
+//        }
 
         updatables = join(list(level.platforms()), singleton(player), list(enemies), list(bullets));
         disposables = join(list(items), list(enemies), list(bullets));
@@ -93,13 +93,11 @@ public class GameStateImpl implements GameState {
         player.next();
 
         if (keyboard.isStartTapped()) {
-            pause = true;
+//            pause = true;
+            level.gravity().flip();
         }
 //        if (keyboard.isNightVisionKeyTapped()) {
 //            nightVision ^= true;
-//        }
-//        if (keyboard.isFlipGravityTapped()) {
-//            level.gravity().flip();
 //        }
 
         if (keyboard.isFireTapped()/* || keyboard.isFirePressed()*/) {
@@ -128,7 +126,7 @@ public class GameStateImpl implements GameState {
             }
             if (!enemy.disposed() && player.intersects(enemy)) {
                 player.decreaseLifeLevel(enemy.damage());
-                player.transform(InvinciblePlayer::new);
+                player.transform(InvinciblePlayer::transform);
             }
         }
         disposables.removeIf(Disposable::disposed);
@@ -169,8 +167,8 @@ public class GameStateImpl implements GameState {
             }
         }
 
-        int leftBorder = 8 * TILE; // ?
-        int rightBorder = SCREEN_WIDTH - 8 * TILE - player.width();
+        int leftBorder = 9 * TILE; // ?
+        int rightBorder = SCREEN_WIDTH - 9 * TILE - player.width();
         int dxOffset = 0;
         if (playerLocalX < leftBorder) {
             dxOffset = playerLocalX - leftBorder;
